@@ -1,0 +1,4459 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#08080a">
+<title>desktop</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' fill='%23000'/><text x='16' y='24' font-size='26' fill='%23ff2b2b' text-anchor='middle' font-family='monospace'>!</text></svg>">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{
+  width:100%;height:100%;overflow:hidden;background:#08080a;
+  font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;
+  user-select:none;-webkit-user-select:none;cursor:default;color:#ddd;
+  position:fixed;inset:0;
+  padding: env(safe-area-inset-top) env(safe-area-inset-right)
+           env(safe-area-inset-bottom) env(safe-area-inset-left);
+}
+@keyframes blink{50%{opacity:0}}
+@keyframes tapPulse{0%,100%{opacity:.25}50%{opacity:.7}}
+@keyframes pulseBorder{0%,100%{box-shadow:0 0 0 0 rgba(255,43,43,.7)}50%{box-shadow:0 0 0 10px rgba(255,43,43,0)}}
+@keyframes waveAnim{0%,100%{transform:scaleY(.4)}50%{transform:scaleY(1)}}
+@keyframes msgIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+@keyframes phoneShake{
+  0%,100%{transform:translate(0,0) rotate(0)}
+  20%{transform:translate(-2px,1px) rotate(-.3deg)}
+  40%{transform:translate(2px,-1px) rotate(.3deg)}
+  60%{transform:translate(-2px,-1px) rotate(-.2deg)}
+  80%{transform:translate(2px,1px) rotate(.2deg)}
+}
+@keyframes warnIn{
+  0%{opacity:0;transform:scale(.5)}
+  60%{opacity:1;transform:scale(1.08)}
+  100%{opacity:1;transform:scale(1)}
+}
+@keyframes warnPulse{
+  0%,100%{box-shadow:0 0 0 0 rgba(255,43,43,.75), 0 0 22px rgba(255,43,43,.55)}
+  50%{box-shadow:0 0 0 10px rgba(255,43,43,0), 0 0 30px rgba(255,43,43,.85)}
+}
+@keyframes warnCritical{
+  0%,100%{box-shadow:0 0 0 0 rgba(255,43,43,.9), 0 0 30px rgba(255,43,43,.85), inset 0 0 20px rgba(255,43,43,.4)}
+  50%{box-shadow:0 0 0 14px rgba(255,43,43,0), 0 0 40px rgba(255,43,43,1), inset 0 0 30px rgba(255,43,43,.6)}
+}
+@keyframes finalRedFlash{
+  0%{background:rgba(0,0,0,.88)}
+  50%{background:rgba(80,0,0,.95)}
+  100%{background:rgba(0,0,0,.88)}
+}
+@keyframes appShake{
+  0%,100%{transform:translate(0,0)}
+  25%{transform:translate(-2px,1px)}
+  75%{transform:translate(2px,-1px)}
+}
+@keyframes toastIn{
+  0%{opacity:0;transform:translate(-50%,-16px)}
+  100%{opacity:1;transform:translate(-50%,0)}
+}
+@keyframes optIn{
+  0%{opacity:0;transform:translateY(8px)}
+  100%{opacity:1;transform:none}
+}
+
+.cursor{display:inline-block;width:8px;height:16px;background:#ff2b2b;vertical-align:-2px;animation:blink 1s step-end infinite}
+
+/* 名字 */
+#name-screen{
+  position:fixed;inset:0;z-index:10100;background:#050506;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:40px 24px;gap:28px;transition:opacity .8s;
+}
+#name-screen.fade{opacity:0;pointer-events:none}
+#name-line1,#name-line2{
+  font-family:"SF Mono","Consolas",monospace;
+  font-size:16px;color:#b8b8b8;letter-spacing:.5px;
+  min-height:22px;text-align:center;line-height:1.8;
+}
+#name-input-wrap{
+  display:flex;align-items:center;gap:0;
+  border-bottom:1px solid rgba(255,255,255,.22);
+  padding-bottom:4px;min-width:200px;
+  opacity:0;transition:opacity .6s;
+}
+#name-input-wrap.show{opacity:1}
+#name-input{
+  flex:1;background:transparent;border:0;outline:0;color:#fff;
+  font-size:20px;text-align:center;letter-spacing:4px;
+  font-family:"SF Mono","Consolas",monospace;padding:8px 4px;
+  min-width:0;
+}
+#name-input::placeholder{color:#333;letter-spacing:2px;font-size:16px}
+#name-confirm{
+  margin-top:4px;padding:12px 32px;border:1px solid rgba(255,43,43,.4);
+  background:transparent;color:#ff5c5c;border-radius:6px;
+  font-family:"SF Mono","Consolas",monospace;font-size:14px;
+  letter-spacing:4px;cursor:pointer;opacity:0;transition:opacity .6s,background .15s;
+}
+#name-confirm.show{opacity:1}
+#name-confirm:active{background:rgba(255,43,43,.12)}
+#name-confirm:disabled{opacity:.15;cursor:not-allowed}
+
+/* 独白 */
+#monologue{
+  position:fixed;inset:0;z-index:10090;background:#050506;
+  display:none;align-items:center;justify-content:center;
+  padding:40px 28px;transition:opacity .8s;
+}
+#monologue.active{display:flex}
+#monologue.fade{opacity:0;pointer-events:none}
+#monologue-text{
+  max-width:520px;width:100%;
+  font-family:"SF Mono","Consolas","Courier New",monospace;
+  font-size:15px;line-height:2;color:#d0d0d0;letter-spacing:.3px;
+  white-space:pre-wrap;word-break:break-word;
+}
+#mono-skip{
+  position:absolute;top:40px;right:20px;
+  padding:8px 14px;border-radius:16px;
+  background:rgba(255,255,255,.08);
+  border:1px solid rgba(255,255,255,.2);
+  color:#ccc;font-size:13px;letter-spacing:1px;
+  cursor:pointer;user-select:none;
+  backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+  z-index:5;
+}
+#mono-skip:active{background:rgba(255,255,255,.18)}
+
+/* iOS 手机 */
+#phone{
+  position:fixed;inset:0;z-index:10000;background:#f2f2f7;
+  display:none;flex-direction:column;color:#111;
+  transition:background .8s;
+}
+#phone.active{display:flex}
+#phone.corrupted{background:#0a0a0c;color:#ddd}
+#phone.shaking{animation:phoneShake .5s}
+
+#phone-statusbar{
+  height:34px;background:transparent;display:flex;align-items:center;
+  padding:0 20px;font-size:13px;font-weight:600;color:#111;
+  justify-content:space-between;flex-shrink:0;position:relative;z-index:3;
+  transition:color .8s;
+}
+#phone.corrupted #phone-statusbar{color:#ff5c5c}
+#phone-statusbar .left{display:flex;gap:5px;align-items:center}
+#phone-statusbar .right{display:flex;gap:6px;align-items:center}
+.sig-bar{display:inline-flex;gap:1px;align-items:flex-end;height:11px}
+.sig-bar i{width:3px;background:currentColor;border-radius:.5px;display:block}
+.sig-bar i:nth-child(1){height:3px}
+.sig-bar i:nth-child(2){height:5px}
+.sig-bar i:nth-child(3){height:7px}
+.sig-bar i:nth-child(4){height:9px}
+.battery{
+  width:22px;height:11px;border:1px solid currentColor;border-radius:2px;
+  position:relative;display:inline-block;
+}
+.battery::after{
+  content:'';position:absolute;top:2px;right:-3px;
+  width:1.5px;height:5px;background:currentColor;border-radius:0 1px 1px 0;
+}
+.battery i{position:absolute;top:1.5px;left:1.5px;bottom:1.5px;
+  background:currentColor;border-radius:1px;width:70%}
+
+#phone-topbar{
+  height:48px;background:rgba(255,255,255,.94);
+  backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+  display:flex;align-items:center;padding:0 12px;gap:10px;
+  border-bottom:.5px solid rgba(0,0,0,.1);flex-shrink:0;z-index:3;
+  transition:background .8s,border-color .8s;position:relative;
+}
+#phone.corrupted #phone-topbar{
+  background:rgba(15,15,18,.94);
+  border-bottom-color:rgba(255,43,43,.35);
+}
+.back-arrow{
+  color:#007aff;font-size:22px;font-weight:400;
+  padding:0 4px;cursor:pointer;transition:color .8s;line-height:1;
+}
+#phone.corrupted .back-arrow{color:#ff5c5c}
+.contact{
+  flex:1;text-align:center;font-size:16px;font-weight:600;color:#111;
+  transition:color .8s;position:relative;
+}
+#phone.corrupted .contact{color:#ff5c5c}
+.contact .avatar{
+  display:inline-block;width:26px;height:26px;border-radius:50%;
+  background:#c4c4c8;color:#fff;font-size:13px;font-weight:600;
+  line-height:26px;text-align:center;margin-right:6px;
+  vertical-align:middle;transition:background .8s;
+}
+#phone.corrupted .contact .avatar{background:#ff2b2b}
+
+#top-actions{
+  position:absolute;top:40px;right:14px;z-index:10060;
+  display:none;gap:8px;
+}
+#top-actions.show{display:flex}
+.top-btn{
+  padding:6px 12px;border-radius:14px;
+  background:rgba(0,0,0,.5);color:#fff;
+  font-size:12px;letter-spacing:.5px;
+  cursor:pointer;user-select:none;
+  backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+  white-space:nowrap;
+}
+.top-btn:active{background:rgba(0,0,0,.75)}
+.top-btn.playing{background:rgba(52,199,89,.7)}
+#phone.corrupted .top-btn{background:rgba(255,43,43,.5)}
+#phone.corrupted .top-btn.playing{background:rgba(255,43,43,.75)}
+
+#phone-chat{
+  flex:1;overflow-y:auto;padding:14px 12px 12px;
+  background:#f2f2f7;transition:background .8s;
+  scroll-behavior:smooth;
+}
+#phone.corrupted #phone-chat{background:#0a0a0c}
+
+.time-divider{
+  text-align:center;font-size:10px;color:#8e8e93;
+  margin:14px 0 8px;letter-spacing:.5px;
+  font-family:"SF Mono","Consolas",monospace;
+}
+
+.msg{
+  display:flex;margin-bottom:8px;opacity:0;transform:translateY(6px);
+  transition:opacity .35s,transform .35s;
+}
+.msg.show{opacity:1;transform:none}
+.msg.me{justify-content:flex-end}
+.bubble-msg{
+  max-width:74%;padding:9px 13px;border-radius:16px;font-size:14px;
+  line-height:1.5;word-break:break-word;position:relative;
+  transition:background .8s,color .8s;
+}
+.msg.you .bubble-msg{
+  background:#fff;color:#111;border-bottom-left-radius:4px;
+}
+.msg.me .bubble-msg{
+  background:#34c759;color:#fff;border-bottom-right-radius:4px;
+}
+#phone.corrupted .msg.you .bubble-msg{background:#1c1c22;color:#e8e8e8}
+#phone.corrupted .msg.me .bubble-msg{background:#3a0d0d;color:#ff8b8b}
+
+.msg.special{justify-content:flex-start}
+.special-card{
+  max-width:76%;padding:10px 13px;border-radius:14px;
+  background:#fff;color:#111;font-size:13px;line-height:1.6;
+  cursor:pointer;transition:background .15s,border-color .8s;
+  border:1px solid rgba(0,0,0,.05);position:relative;
+  display:flex;align-items:center;gap:10px;
+}
+.special-card:active{background:#f0f0f4}
+.special-card .obj-icon{
+  width:34px;height:34px;border-radius:8px;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+  font-size:18px;background:#f2f2f7;
+}
+.special-card .obj-info{flex:1;min-width:0}
+.special-card .obj-label{color:#8e8e93;font-size:11px;margin-bottom:2px}
+.special-card .obj-main{font-weight:500;color:#111;font-size:14px}
+.special-card .obj-sub{color:#8e8e93;font-size:11px;margin-top:2px}
+#phone.corrupted .special-card{
+  background:#15151a;color:#e8e8e8;border-color:rgba(255,43,43,.35);
+}
+#phone.corrupted .special-card .obj-icon{background:#2a1010}
+#phone.corrupted .special-card .obj-label{color:#ff5c5c}
+#phone.corrupted .special-card .obj-main{color:#ff8b8b}
+#phone.corrupted .special-card .obj-sub{color:#a05a5a}
+
+#phone-input-bar{
+  padding:10px 12px;background:rgba(255,255,255,.94);
+  backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+  border-top:.5px solid rgba(0,0,0,.1);
+  display:none;align-items:center;gap:8px;flex-shrink:0;
+  transition:background .8s,border-color .8s;
+}
+#phone-input-bar.active{display:flex}
+#phone.corrupted #phone-input-bar{
+  background:rgba(15,15,18,.94);border-top-color:rgba(255,43,43,.35);
+}
+#phone-draft{
+  flex:1;background:#fff;border:1px solid rgba(0,0,0,.08);
+  border-radius:18px;padding:9px 14px;font-size:14px;color:#111;
+  font-family:inherit;outline:0;
+}
+#phone-draft.filled{border-color:#34c759}
+#phone.corrupted #phone-draft{
+  background:#1c1c22;color:#ff8b8b;border-color:rgba(255,43,43,.35);
+}
+#phone-send{
+  background:#34c759;color:#fff;border:0;border-radius:18px;
+  padding:9px 16px;font-size:14px;font-weight:600;cursor:pointer;
+  opacity:.4;transition:opacity .2s,background .8s;
+}
+#phone-send.ready{opacity:1}
+#phone-send:active{background:#28a745}
+#phone.corrupted #phone-send{background:#ff2b2b;opacity:1}
+
+#tap-hint{
+  position:absolute;bottom:22%;left:50%;transform:translateX(-50%);
+  color:#8e8e93;font-size:12px;letter-spacing:2px;
+  animation:tapPulse 2s infinite;pointer-events:none;
+  z-index:5;white-space:nowrap;
+}
+#phone.corrupted #tap-hint{color:#ff5c5c}
+
+#drawer{
+  position:fixed;left:0;right:0;bottom:0;z-index:10050;
+  background:#fff;border-radius:16px 16px 0 0;
+  padding:20px 20px 30px;transform:translateY(100%);
+  transition:transform .35s cubic-bezier(.32,.72,0,1);
+  box-shadow:0 -10px 40px rgba(0,0,0,.2);
+  max-height:78vh;overflow-y:auto;
+}
+#drawer.open{transform:translateY(0)}
+#drawer .drawer-handle{
+  width:36px;height:4px;background:#d0d0d5;border-radius:2px;
+  margin:0 auto 16px;
+}
+#drawer h3{font-size:16px;font-weight:600;color:#111;margin-bottom:14px;text-align:center;}
+#drawer .amount{font-size:38px;font-weight:300;color:#111;letter-spacing:-1px;text-align:center;margin:10px 0 6px;}
+#drawer .amount-sub{font-size:13px;color:#8e8e93;text-align:center;margin-bottom:20px;}
+#drawer .note{background:#f2f2f7;border-radius:10px;padding:12px;font-size:13px;color:#333;text-align:left;margin-top:12px;line-height:1.8;}
+#drawer .file-paper{background:linear-gradient(#fdfaf3,#f8f2e2);border:1px solid #e8ddb8;border-radius:8px;padding:20px 18px;margin:8px 0;font-family:"Kaiti SC","STKaiti",serif;font-size:14px;color:#333;line-height:2;text-align:left;}
+#drawer .voice{display:flex;align-items:center;gap:12px;background:#f2f2f7;border-radius:12px;padding:14px;margin:10px 0;}
+#drawer .voice .wave{flex:1;height:30px;display:flex;align-items:center;gap:2px;}
+#drawer .voice .wave i{flex:1;background:#34c759;border-radius:1px;height:100%;animation:waveAnim 1.2s infinite ease-in-out;}
+#drawer .voice-text{font-size:13px;color:#333;line-height:1.9;background:#f2f2f7;border-radius:10px;padding:12px;margin-top:10px;text-align:left;font-style:italic;}
+#drawer .call-log{display:flex;flex-direction:column;gap:8px;background:#f2f2f7;border-radius:12px;padding:14px;margin:10px 0;}
+#drawer .call-log .row{display:flex;justify-content:space-between;font-size:13px;color:#333;}
+#drawer .call-log .row span:first-child{color:#8e8e93}
+#drawer .sticker-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:10px 0;}
+#drawer .sticker-grid .sk{background:#f2f2f7;border-radius:12px;padding:14px 8px;text-align:center;}
+#drawer .sticker-grid .sk .emo{font-size:38px}
+#drawer .sticker-grid .sk .cap{font-size:11px;color:#8e8e93;margin-top:6px}
+#drawer .sticker-grid .sk .count{font-size:10px;color:#c41e2c;margin-top:4px}
+#drawer-close{display:block;width:100%;margin-top:18px;padding:13px;border:0;background:#f2f2f7;color:#007aff;font-size:15px;font-weight:500;border-radius:10px;cursor:pointer;font-family:inherit;}
+#drawer-close:active{background:#e5e5ea}
+#drawer-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:10040;opacity:0;pointer-events:none;transition:opacity .35s;}
+#drawer-backdrop.open{opacity:1;pointer-events:auto}
+
+/* 警告弹窗 */
+#warn-layer{position:fixed;inset:0;z-index:10080;display:none;overflow:hidden;background:rgba(0,0,0,.88);}
+#warn-layer.active{display:block}
+#warn-layer.black{background:#000}
+#warn-layer.final{animation:finalRedFlash .6s 3}
+
+.warn-box{position:absolute;width:170px;height:150px;background:linear-gradient(180deg, #1a1a20 0%, #0d0d12 100%);border:2.5px solid #ff2b2b;border-radius:8px;padding:12px 10px;color:#e8e8e8;font-family:"SF Mono","Consolas",monospace;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;animation:warnIn .28s cubic-bezier(.34,1.56,.64,1), warnPulse 1.6s infinite;box-shadow:0 0 0 1px rgba(255,43,43,.3), 0 0 22px rgba(255,43,43,.55);}
+.warn-box .warn-icon{width:34px;height:34px;border-radius:50%;background:rgba(255,43,43,.28);border:2.5px solid #ff2b2b;color:#ff2b2b;font-size:22px;font-weight:900;display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 0 16px rgba(255,43,43,.9), inset 0 0 8px rgba(255,43,43,.5);margin-bottom:8px;text-shadow:0 0 10px rgba(255,43,43,1);}
+.warn-box .warn-title{color:#ff5c5c;font-size:16px;font-weight:900;letter-spacing:1.5px;line-height:1.3;text-shadow:0 0 8px rgba(255,43,43,.9);margin-bottom:6px;}
+.warn-box .warn-body{color:#e8e8e8;font-size:15px;font-weight:700;letter-spacing:.8px;line-height:1.4;text-shadow:0 0 4px rgba(0,0,0,.9);}
+.warn-box.critical{background:linear-gradient(180deg, #2a0808 0%, #140404 100%);border-color:#ff1744;animation:warnIn .28s cubic-bezier(.34,1.56,.64,1), warnCritical 1.2s infinite;}
+.warn-box.critical .warn-icon{background:rgba(255,23,68,.4);border-color:#ff1744;box-shadow:0 0 20px rgba(255,23,68,1), inset 0 0 8px rgba(255,23,68,.7);}
+.warn-box.critical .warn-title{color:#ff1744;text-shadow:0 0 12px rgba(255,23,68,1);}
+.warn-box.critical .warn-body{color:#ff8b8b;}
+
+/* 桌面 */
+#desktop{position:fixed;inset:52px 0 60px 0;background:radial-gradient(circle at 40% 20%,#17171f 0%,#08080a 72%);display:none;padding:16px 12px;overflow:hidden;}
+#desktop.active{display:block}
+.icon-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:18px 8px}
+.icon{display:flex;flex-direction:column;align-items:center;gap:5px;padding:8px 2px;border-radius:8px;cursor:pointer;transition:transform .1s;}
+.icon:active{transform:scale(.96)}
+.icon.locked .glyph{filter:grayscale(.4) brightness(.85);box-shadow:0 6px 16px rgba(0,0,0,.55), inset 0 0 0 1.5px rgba(255,43,43,.4);}
+.icon .glyph{width:52px;height:52px;border-radius:13px;display:flex;align-items:center;justify-content:center;font-size:26px;color:#fff;box-shadow:0 6px 16px rgba(0,0,0,.55);}
+.icon .label{font-size:11px;color:#cfcfcf;text-shadow:0 1px 3px #000;text-align:center;line-height:1.2;}
+.icon.locked .label{color:#8a5555}
+.icon.unlocked .glyph{filter:none;box-shadow:0 6px 16px rgba(0,0,0,.55), 0 0 0 2px rgba(255,43,43,.9);animation:pulseBorder 1.6s infinite;}
+.icon.unlocked .label{color:#ff5c5c;font-weight:600}
+.icon.done .glyph{filter:none;box-shadow:0 6px 16px rgba(0,0,0,.55), 0 0 0 2px rgba(136,224,160,.6);}
+.icon.done .label{color:#88e0a0}
+.g-wechat{background:#07c160}.g-qq{background:#12b7f5}
+.g-weibo{background:#e6162d}.g-mail{background:#2b6cb0}
+.g-browser{background:#3d4451}
+
+#taskbar{position:fixed;left:0;right:0;bottom:0;height:60px;z-index:500;background:rgba(18,18,24,.96);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-top:1px solid rgba(255,255,255,.06);display:none;align-items:center;padding:0 12px;gap:6px;}
+#taskbar.active{display:flex}
+.tb-item{width:42px;height:42px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:19px;color:#fff;opacity:.5;}
+#clock{margin-left:auto;color:#9a9a9a;font-size:12px;letter-spacing:.6px}
+
+#blackout{position:fixed;inset:0;z-index:10200;background:#000;opacity:0;pointer-events:none;transition:opacity 1.2s;}
+#blackout.on{opacity:1;pointer-events:auto}
+
+#sys-toast-layer{position:fixed;left:0;right:0;top:20px;z-index:99999;pointer-events:none;display:flex;justify-content:center;opacity:0;transition:opacity .3s;}
+#sys-toast-layer.show{opacity:1}
+.sys-toast{max-width:88vw;background:rgba(30,10,10,.98);border:2px solid #ff2b2b;border-radius:12px;padding:14px 18px;color:#fff;font-size:15px;font-weight:600;line-height:1.5;text-align:center;box-shadow:0 0 24px rgba(255,43,43,.85), 0 10px 30px rgba(0,0,0,.7);animation:toastIn .25s ease-out;}
+.sys-toast .t-icon{color:#ff5c5c;margin-right:8px;font-weight:900;font-size:17px;}
+
+/* 微信 App */
+#wechat-app{position:fixed;inset:0;z-index:10100;background:#f2f2f7;display:none;flex-direction:column;color:#111;}
+#wechat-app.active{display:flex}
+#wechat-app.shaking{animation:appShake .5s}
+.wc-topbar{height:52px;background:#ededed;display:flex;align-items:center;padding:0 14px;gap:10px;border-bottom:.5px solid rgba(0,0,0,.08);flex-shrink:0;position:relative;}
+.wc-topbar .back{color:#111;font-size:22px;cursor:pointer;line-height:1;padding:0 4px;}
+.wc-topbar .title{flex:1;text-align:center;font-size:16px;font-weight:600;color:#111;}
+.wc-topbar .right-btn{color:#111;font-size:20px;cursor:pointer;padding:0 4px;}
+#wc-main{flex:1;display:flex;flex-direction:column;overflow:hidden;}
+#wc-content{flex:1;overflow-y:auto;background:#fff;}
+.wc-chat-list{display:flex;flex-direction:column}
+.wc-chat-item{display:flex;align-items:center;gap:12px;padding:12px 14px;background:#fff;cursor:pointer;border-bottom:.5px solid rgba(0,0,0,.06);}
+.wc-chat-item:active{background:#f0f0f0}
+.wc-chat-item .avatar{width:44px;height:44px;border-radius:6px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:20px;color:#fff;background:#c4c4c8;}
+.wc-chat-item .info{flex:1;min-width:0}
+.wc-chat-item .name{font-size:15px;font-weight:500;color:#111;margin-bottom:3px}
+.wc-chat-item .preview{font-size:13px;color:#888;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.wc-chat-item .meta{text-align:right;flex-shrink:0}
+.wc-chat-item .time{font-size:11px;color:#999;margin-bottom:4px}
+.wc-chat-item .badge{display:inline-block;min-width:16px;height:16px;line-height:16px;padding:0 4px;background:#fa5151;color:#fff;border-radius:8px;font-size:10px;text-align:center;}
+.wc-tabbar{height:56px;background:#f7f7f7;border-top:.5px solid rgba(0,0,0,.08);display:flex;flex-shrink:0;}
+.wc-tab{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;cursor:pointer;color:#999;font-size:10px;}
+.wc-tab.active{color:#07c160}
+.wc-tab .tab-icon{font-size:20px}
+.wc-page{padding:14px;background:#fff;min-height:100%;}
+.wc-page-title{font-size:13px;color:#888;margin-bottom:10px;padding-left:4px;}
+.wc-friend-post{padding:12px 0;border-bottom:.5px solid rgba(0,0,0,.06);display:flex;gap:10px;}
+.wc-friend-post .p-avatar{width:38px;height:38px;border-radius:5px;background:#c4c4c8;flex-shrink:0;display:flex;align-items:center;justify-content:center;color:#fff;font-size:16px;}
+.wc-friend-post .p-body{flex:1;min-width:0}
+.wc-friend-post .p-name{color:#5a7db0;font-size:14px;font-weight:500;margin-bottom:4px}
+.wc-friend-post .p-text{color:#111;font-size:14px;line-height:1.5;margin-bottom:6px}
+.wc-friend-post .p-img{width:100px;height:100px;background:#ddd;border-radius:6px;margin-bottom:6px;display:flex;align-items:center;justify-content:center;color:#888;font-size:11px;}
+.wc-friend-post .p-time{color:#999;font-size:11px}
+.wc-friend-post .p-actions{margin-top:8px;background:#f7f7f7;border-radius:6px;padding:6px 10px;font-size:12px;color:#666;line-height:1.7;}
+.wc-friend-post .p-actions .like{color:#5a7db0}
+.wc-friend-post .p-actions .cmt{color:#333}
+.wc-friend-post .p-actions .cmt b{color:#5a7db0;font-weight:500}
+.wc-fav-item{padding:12px 14px;background:#fff;border-bottom:.5px solid rgba(0,0,0,.06);display:flex;gap:12px;align-items:flex-start;}
+.wc-fav-item .fav-icon{width:36px;height:36px;border-radius:6px;background:#f2f2f7;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:18px;}
+.wc-fav-item .fav-info{flex:1;min-width:0}
+.wc-fav-item .fav-title{color:#111;font-size:14px;margin-bottom:4px}
+.wc-fav-item .fav-sub{color:#888;font-size:12px;line-height:1.5}
+.wc-fav-item .fav-time{color:#aaa;font-size:11px;margin-top:3px}
+.wc-wallet{padding:40px 20px;text-align:center;color:#999;}
+.wc-wallet .big{font-size:32px;color:#07c160;margin-bottom:8px;font-weight:300}
+
+/* 敏感点覆盖层（选项版） */
+#wc-overlay{position:fixed;inset:0;z-index:10110;background:rgba(0,0,0,.92);display:none;flex-direction:column;align-items:center;justify-content:center;padding:30px 20px;}
+#wc-overlay.active{display:flex}
+#wc-dialog{width:100%;max-width:520px;display:flex;flex-direction:column;gap:20px;}
+#wc-status{font-size:10px;color:#663;letter-spacing:2px;font-family:"SF Mono","Consolas",monospace;}
+#wc-asked{font-family:"SF Mono","Consolas","Courier New",monospace;font-size:17px;line-height:1.9;color:#ececec;min-height:100px;white-space:pre-wrap;word-break:break-word;}
+#wc-asked .line{display:block;margin-bottom:6px}
+#wc-asked .dim{color:#888}
+#wc-asked .red{color:#ff5c5c}
+#wc-options{display:flex;flex-direction:column;gap:10px;}
+#wc-options .opt{
+  width:100%;text-align:left;
+  padding:14px 16px;border-radius:10px;
+  background:rgba(255,43,43,.06);
+  border:1px solid rgba(255,43,43,.35);
+  color:#ececec;font-size:14.5px;line-height:1.6;
+  font-family:"SF Mono","Consolas",monospace;
+  cursor:pointer;
+  transition:background .15s,transform .1s,border-color .15s;
+  animation:optIn .3s ease-out both;
+}
+#wc-options .opt:active{background:rgba(255,43,43,.22);transform:scale(.99)}
+#wc-options .opt:hover{border-color:rgba(255,43,43,.75);background:rgba(255,43,43,.12)}
+#wc-options .opt .opt-mark{color:#ff5c5c;margin-right:8px;font-weight:900}
+
+/* QQ App */
+#qq-app{position:fixed;inset:0;z-index:10100;background:#f2f2f7;display:none;flex-direction:column;color:#111;}
+#qq-app.active{display:flex}
+#qq-app.shaking{animation:appShake .5s}
+.qq-topbar{height:52px;background:#12b7f5;display:flex;align-items:center;padding:0 14px;gap:10px;border-bottom:.5px solid rgba(0,0,0,.08);flex-shrink:0;position:relative;color:#fff;}
+.qq-topbar .back{color:#fff;font-size:22px;cursor:pointer;line-height:1;padding:0 4px;}
+.qq-topbar .title{flex:1;text-align:center;font-size:16px;font-weight:600;color:#fff;}
+.qq-topbar .right-btn{color:#fff;font-size:20px;cursor:pointer;padding:0 4px;}
+#qq-main{flex:1;display:flex;flex-direction:column;overflow:hidden;}
+#qq-content{flex:1;overflow-y:auto;background:#fff;}
+.qq-chat-list{display:flex;flex-direction:column}
+.qq-chat-item{display:flex;align-items:center;gap:12px;padding:12px 14px;background:#fff;cursor:pointer;border-bottom:.5px solid rgba(0,0,0,.06);}
+.qq-chat-item:active{background:#f0f0f0}
+.qq-chat-item .avatar{width:44px;height:44px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:18px;color:#fff;background:#c4c4c8;}
+.qq-chat-item .info{flex:1;min-width:0}
+.qq-chat-item .name{font-size:15px;font-weight:500;color:#111;margin-bottom:3px}
+.qq-chat-item .preview{font-size:13px;color:#888;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.qq-chat-item .meta{text-align:right;flex-shrink:0}
+.qq-chat-item .time{font-size:11px;color:#999}
+.qq-tabbar{height:56px;background:#f7f7f7;border-top:.5px solid rgba(0,0,0,.08);display:flex;flex-shrink:0;}
+.qq-tab{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;cursor:pointer;color:#999;font-size:10px;}
+.qq-tab.active{color:#12b7f5}
+.qq-tab .tab-icon{font-size:20px}
+.qq-page{padding:14px;background:#fff;min-height:100%;}
+.qq-section-title{font-size:13px;color:#888;margin-bottom:10px;padding-left:4px;}
+.qq-list-item{padding:12px 14px;background:#fff;border-bottom:.5px solid rgba(0,0,0,.06);font-size:14px;display:flex;gap:12px;align-items:center;}
+.qq-shuo-item{padding:14px 0;border-bottom:.5px solid rgba(0,0,0,.06);display:flex;gap:10px;}
+.qq-shuo-item .s-avatar{width:38px;height:38px;border-radius:5px;background:#c4c4c8;flex-shrink:0;display:flex;align-items:center;justify-content:center;color:#fff;font-size:16px;}
+.qq-shuo-item .s-body{flex:1;min-width:0}
+.qq-shuo-item .s-name{color:#12b7f5;font-size:14px;font-weight:500;margin-bottom:4px}
+.qq-shuo-item .s-text{color:#111;font-size:14px;line-height:1.5;margin-bottom:6px}
+.qq-shuo-item .s-time{color:#999;font-size:11px}
+.qq-album-item{padding:14px;background:#fff;border-bottom:.5px solid rgba(0,0,0,.06);}
+.qq-album-title{font-size:15px;font-weight:500;color:#111;margin-bottom:8px}
+.qq-album-count{font-size:12px;color:#888;margin-bottom:10px}
+.qq-album-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;}
+.qq-album-grid .p{aspect-ratio:1;background:#ddd;border-radius:4px;display:flex;align-items:center;justify-content:center;color:#888;font-size:10px;}
+
+/* 邮箱 App */
+#mail-app{position:fixed;inset:0;z-index:10100;background:#f2f2f7;display:none;flex-direction:column;color:#111;}
+#mail-app.active{display:flex}
+#mail-app.shaking{animation:appShake .5s}
+.mail-topbar{height:52px;background:#2b6cb0;display:flex;align-items:center;padding:0 14px;gap:10px;border-bottom:.5px solid rgba(0,0,0,.08);flex-shrink:0;position:relative;color:#fff;}
+.mail-topbar .back{color:#fff;font-size:22px;cursor:pointer;line-height:1;padding:0 4px;}
+.mail-topbar .title{flex:1;text-align:center;font-size:16px;font-weight:600;color:#fff;}
+#mail-main{flex:1;display:flex;flex-direction:column;overflow:hidden;}
+#mail-content{flex:1;overflow-y:auto;background:#fff;}
+.mail-tabbar{height:56px;background:#f7f7f7;border-top:.5px solid rgba(0,0,0,.08);display:flex;flex-shrink:0;}
+.mail-tab{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;cursor:pointer;color:#999;font-size:10px;}
+.mail-tab.active{color:#2b6cb0}
+.mail-tab .tab-icon{font-size:20px}
+.mail-item{padding:14px;background:#fff;border-bottom:.5px solid rgba(0,0,0,.06);cursor:pointer;}
+.mail-item .m-from{font-size:14px;font-weight:500;color:#111;margin-bottom:4px}
+.mail-item .m-subject{font-size:13px;color:#333;margin-bottom:4px}
+.mail-item .m-preview{font-size:12px;color:#888;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mail-item .m-time{font-size:11px;color:#aaa;margin-top:4px}
+.mail-item.unread{background:#eef6ff}
+.mail-item.unread .m-from::before{content:'●';color:#2b6cb0;margin-right:6px;font-size:10px;}
+.mail-detail{padding:18px;background:#fff;min-height:100%}
+.mail-detail h3{font-size:16px;color:#111;margin-bottom:8px}
+.mail-detail .meta{font-size:12px;color:#888;margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid #eee}
+.mail-detail .body{font-size:14px;color:#333;line-height:1.9;white-space:pre-wrap}
+
+.img-preview{width:100%;height:220px;border-radius:10px;margin:8px 0;background:linear-gradient(135deg,#e8e0d0,#c8b8a0);display:flex;align-items:center;justify-content:center;color:#8a7a6a;font-size:13px;position:relative;overflow:hidden;}
+
+/* 微博 App */
+#weibo-app{position:fixed;inset:0;z-index:10100;background:#f2f2f7;display:none;flex-direction:column;color:#111;}
+#weibo-app.active{display:flex}
+#weibo-app.shaking{animation:appShake .5s}
+.wb-topbar{height:52px;background:#e6162d;display:flex;align-items:center;padding:0 14px;gap:10px;border-bottom:.5px solid rgba(0,0,0,.08);flex-shrink:0;position:relative;color:#fff;}
+.wb-topbar .back{color:#fff;font-size:22px;cursor:pointer;line-height:1;padding:0 4px;}
+.wb-topbar .title{flex:1;text-align:center;font-size:16px;font-weight:600;color:#fff;}
+#wb-main{flex:1;display:flex;flex-direction:column;overflow:hidden;}
+#wb-content{flex:1;overflow-y:auto;background:#fff;}
+.wb-tabbar{height:56px;background:#f7f7f7;border-top:.5px solid rgba(0,0,0,.08);display:flex;flex-shrink:0;}
+.wb-tab{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;cursor:pointer;color:#999;font-size:10px;}
+.wb-tab.active{color:#e6162d}
+.wb-tab .tab-icon{font-size:20px}
+.wb-page{padding:14px;background:#fff;min-height:100%;}
+.wb-section-title{font-size:13px;color:#888;margin-bottom:10px;padding-left:4px;}
+.wb-post{padding:14px 0;border-bottom:.5px solid rgba(0,0,0,.06);display:flex;gap:10px;}
+.wb-post .w-avatar{width:40px;height:40px;border-radius:50%;background:#e6162d;color:#fff;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:16px;}
+.wb-post .w-body{flex:1;min-width:0}
+.wb-post .w-name{color:#e6162d;font-size:14px;font-weight:500;margin-bottom:4px}
+.wb-post .w-text{color:#111;font-size:14px;line-height:1.55;margin-bottom:8px}
+.wb-post .w-img{width:100%;height:140px;background:#eee;border-radius:6px;margin-bottom:8px;display:flex;align-items:center;justify-content:center;color:#888;font-size:12px;}
+.wb-post .w-actions{display:flex;gap:20px;font-size:12px;color:#888;padding-top:6px;border-top:.5px solid rgba(0,0,0,.04);}
+.wb-post .w-time{color:#aaa;font-size:11px;margin-bottom:6px}
+
+/* 浏览器 App */
+#browser-app{position:fixed;inset:0;z-index:10100;background:#f2f2f7;display:none;flex-direction:column;color:#111;}
+#browser-app.active{display:flex}
+#browser-app.shaking{animation:appShake .5s}
+.br-topbar{height:52px;background:#3d4451;display:flex;align-items:center;padding:0 14px;gap:10px;border-bottom:.5px solid rgba(0,0,0,.08);flex-shrink:0;position:relative;color:#fff;}
+.br-topbar .back{color:#fff;font-size:22px;cursor:pointer;line-height:1;padding:0 4px;}
+.br-topbar .title{flex:1;text-align:center;font-size:16px;font-weight:600;color:#fff;}
+#br-main{flex:1;display:flex;flex-direction:column;overflow:hidden;}
+#br-content{flex:1;overflow-y:auto;background:#fff;}
+.br-tabbar{height:56px;background:#f7f7f7;border-top:.5px solid rgba(0,0,0,.08);display:flex;flex-shrink:0;}
+.br-tab{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;cursor:pointer;color:#999;font-size:10px;}
+.br-tab.active{color:#3d4451}
+.br-tab .tab-icon{font-size:20px}
+.br-page{padding:14px;background:#fff;min-height:100%;}
+.br-section-title{font-size:13px;color:#888;margin-bottom:10px;padding-left:4px;}
+.br-item{padding:12px 14px;background:#fff;border-bottom:.5px solid rgba(0,0,0,.06);cursor:pointer;}
+.br-item .b-title{font-size:14px;color:#111;margin-bottom:4px}
+.br-item .b-url{font-size:11px;color:#888;margin-bottom:4px}
+.br-item .b-time{font-size:11px;color:#aaa}
+.br-search-item{padding:12px 14px;border-bottom:.5px solid rgba(0,0,0,.06);}
+.br-search-item .s-q{font-size:14px;color:#111;margin-bottom:4px}
+.br-search-item .s-time{font-size:11px;color:#aaa}
+
+/* ============ 结局：Cents 接管 ============ */
+#cents-end{
+  position:fixed;inset:0;z-index:10300;
+  background:#050506;display:none;
+  align-items:center;justify-content:center;
+  padding:40px 24px;overflow:hidden;
+}
+#cents-end.active{display:flex}
+#cents-end .ce-bg{
+  position:absolute;inset:0;
+  background:radial-gradient(circle at 50% 40%, rgba(120,0,0,.22) 0%, rgba(0,0,0,0) 62%);
+  animation:ceBgPulse 2.6s ease-in-out infinite;
+}
+@keyframes ceBgPulse{
+  0%,100%{opacity:.55;transform:scale(1)}
+  50%{opacity:1;transform:scale(1.06)}
+}
+#cents-end .ce-scan{
+  position:absolute;inset:0;
+  background:repeating-linear-gradient(180deg, rgba(255,43,43,.05) 0 1px, transparent 1px 4px);
+  pointer-events:none;opacity:.5;
+}
+#cents-end .ce-inner{
+  position:relative;z-index:2;
+  width:100%;max-width:520px;
+  display:flex;flex-direction:column;align-items:center;
+  gap:26px;text-align:center;
+}
+.ce-mark{
+  width:96px;height:96px;border-radius:22px;
+  display:flex;align-items:center;justify-content:center;
+  background:linear-gradient(180deg,#1a0505 0%,#0a0202 100%);
+  border:2px solid #ff2b2b;
+  box-shadow:0 0 30px rgba(255,43,43,.85), inset 0 0 22px rgba(255,43,43,.35);
+  position:relative;
+  animation:ceMarkPulse 1.8s ease-in-out infinite;
+}
+@keyframes ceMarkPulse{
+  0%,100%{box-shadow:0 0 24px rgba(255,43,43,.7), inset 0 0 18px rgba(255,43,43,.28)}
+  50%{box-shadow:0 0 46px rgba(255,43,43,1), inset 0 0 30px rgba(255,43,43,.5)}
+}
+.ce-mark .ce-c{
+  font-family:"SF Mono","Consolas",monospace;
+  font-size:54px;font-weight:900;color:#ff2b2b;
+  text-shadow:0 0 18px rgba(255,43,43,1), 0 0 42px rgba(255,43,43,.7);
+  line-height:1;
+  animation:ceCPulse 1.8s ease-in-out infinite;
+}
+@keyframes ceCPulse{
+  0%,100%{transform:scale(1)}
+  50%{transform:scale(1.06)}
+}
+.ce-mark::after{
+  content:'';position:absolute;inset:-8px;border-radius:26px;
+  border:1px dashed rgba(255,43,43,.4);
+  animation:ceSpin 9s linear infinite;
+}
+@keyframes ceSpin{to{transform:rotate(360deg)}}
+
+.ce-title{
+  font-family:"SF Mono","Consolas",monospace;
+  font-size:20px;letter-spacing:4px;color:#ff5c5c;
+  text-shadow:0 0 12px rgba(255,43,43,.9);
+}
+.ce-sub{
+  font-family:"SF Mono","Consolas",monospace;
+  font-size:11px;letter-spacing:3px;color:#8a3a3a;
+}
+.ce-lines{
+  font-family:"SF Mono","Consolas","Courier New",monospace;
+  font-size:19px;line-height:2.1;color:#f0f0f0;
+  min-height:210px;white-space:pre-wrap;
+  text-shadow:0 0 10px rgba(255,43,43,.35);
+}
+.ce-lines .name{
+  font-size:23px;color:#ff5c5c;
+  text-shadow:0 0 16px rgba(255,43,43,.95);
+  display:block;margin-bottom:10px;letter-spacing:2px;
+}
+.ce-actions{
+  display:none;gap:18px;margin-top:6px;
+}
+.ce-actions.show{display:flex}
+.ce-btn{
+  min-width:112px;padding:14px 30px;border-radius:10px;
+  font-family:"SF Mono","Consolas",monospace;
+  font-size:16px;letter-spacing:4px;cursor:pointer;
+  border:1.5px solid #ff2b2b;background:rgba(255,43,43,.08);
+  color:#ff5c5c;transition:background .15s,transform .12s;
+}
+.ce-btn:active{background:rgba(255,43,43,.28)}
+.ce-btn.good{
+  background:rgba(255,43,43,.9);color:#fff;
+  box-shadow:0 0 26px rgba(255,43,43,.9);
+  animation:ceGoodPulse 1.6s ease-in-out infinite;
+}
+@keyframes ceGoodPulse{
+  0%,100%{box-shadow:0 0 20px rgba(255,43,43,.75)}
+  50%{box-shadow:0 0 42px rgba(255,43,43,1)}
+}
+.ce-btn.bad{
+  background:rgba(255,255,255,.04);
+  border-color:rgba(255,43,43,.35);color:#a05a5a;
+}
+.ce-btn-wrap{
+  position:relative;display:flex;align-items:center;justify-content:center;
+  gap:20px;width:100%;min-height:52px;
+}
+/* "不好"按钮：只在被点击后才脱离文档流飞走 */
+.ce-btn.bad.escape{
+  position:fixed;
+  z-index:10500;
+  transition:left .18s cubic-bezier(.34,1.4,.64,1),
+             top  .18s cubic-bezier(.34,1.4,.64,1),
+             transform .18s ease, opacity .3s;
+  will-change:left,top,transform;
+}
+.ce-taunt{
+  font-family:"SF Mono","Consolas",monospace;
+  font-size:15px;color:#ff8b8b;letter-spacing:1.5px;
+  min-height:24px;
+  text-shadow:0 0 10px rgba(255,43,43,.7);
+}
+
+/* 庆祝动画 */
+#ce-celebrate{
+  position:fixed;inset:0;z-index:10400;
+  background:#050506;display:none;
+  align-items:center;justify-content:center;overflow:hidden;
+}
+#ce-celebrate.active{display:flex}
+#ce-canvas{position:absolute;inset:0;width:100%;height:100%}
+.ce-cel-text{
+  position:relative;z-index:3;
+  font-family:"SF Mono","Consolas",monospace;
+  text-align:center;color:#fff;letter-spacing:3px;
+  opacity:0;transform:scale(.86);
+  transition:opacity .5s,transform .5s;
+}
+.ce-cel-text.show{opacity:1;transform:scale(1)}
+.ce-cel-text .big{
+  font-size:34px;font-weight:900;color:#ff2b2b;
+  text-shadow:0 0 24px rgba(255,43,43,1);
+  animation:ceHeartbeat 1.1s ease-in-out infinite;
+  display:block;margin-bottom:14px;letter-spacing:5px;
+}
+.ce-cel-text .small{font-size:14px;color:#ff8b8b;letter-spacing:4px}
+@keyframes ceHeartbeat{
+  0%,100%{transform:scale(1)}
+  14%{transform:scale(1.1)}
+  28%{transform:scale(1)}
+  42%{transform:scale(1.08)}
+  56%{transform:scale(1)}
+}
+
+/* 全局跳过按钮 */
+#global-skip{
+  position:fixed;top:14px;right:14px;z-index:99998;
+  padding:8px 16px;border-radius:18px;
+  background:rgba(20,20,26,.82);
+  border:1.5px solid rgba(255,43,43,.55);
+  color:#ff8b8b;font-size:13px;letter-spacing:1.5px;
+  font-family:"SF Mono","Consolas",monospace;
+  cursor:pointer;user-select:none;
+  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+  box-shadow:0 0 14px rgba(255,43,43,.35);
+  transition:background .15s,transform .1s;
+  display:none;
+}
+#global-skip.show{display:block}
+#global-skip:active{background:rgba(255,43,43,.28);transform:scale(.96)}
+</style>
+</head>
+<body>
+
+<div id="name-screen">
+  <div id="name-line1"></div>
+  <div id="name-input-wrap">
+    <input id="name-input" type="text" autocomplete="off"
+           spellcheck="false" maxlength="8" placeholder="……" />
+  </div>
+  <div id="name-line2"></div>
+  <button id="name-confirm" disabled>确 认</button>
+</div>
+
+<div id="monologue">
+  <div id="mono-skip">跳过 ▸▸</div>
+  <div id="monologue-text"></div>
+</div>
+
+<div id="phone">
+  <div id="phone-statusbar">
+    <div class="left"><span id="ph-time">9:41</span></div>
+    <div class="right">
+      <span class="sig-bar"><i></i><i></i><i></i><i></i></span>
+      <span style="font-size:11px;font-weight:400">5G</span>
+      <span class="battery"><i></i></span>
+    </div>
+  </div>
+  <div id="phone-topbar">
+    <span class="back-arrow">‹</span>
+    <div class="contact"><span class="avatar">C</span>Cents</div>
+    <span style="width:22px"></span>
+  </div>
+  <div id="top-actions">
+    <div class="top-btn" id="auto-btn">自动 1x</div>
+    <div class="top-btn" id="skip-btn">跳过 ▸▸</div>
+  </div>
+  <div id="phone-chat"></div>
+  <div id="phone-input-bar">
+    <input id="phone-draft" type="text" readonly value="" />
+    <button id="phone-send">发送</button>
+  </div>
+  <div id="tap-hint">点 击 屏 幕 继 续</div>
+</div>
+
+<div id="drawer-backdrop"></div>
+<div id="drawer">
+  <div class="drawer-handle"></div>
+  <div id="drawer-content"></div>
+  <button id="drawer-close">关闭</button>
+</div>
+
+<div id="warn-layer"></div>
+<div id="sys-toast-layer"></div>
+
+<!-- 全局一键跳过 -->
+<div id="global-skip">跳过 ▸▸</div>
+
+<div id="desktop"><div class="icon-grid" id="icon-grid"></div></div>
+<div id="taskbar">
+  <div class="tb-item" data-app="wechat">💬</div>
+  <div class="tb-item" data-app="qq">🐧</div>
+  <div class="tb-item" data-app="weibo">🌐</div>
+  <div class="tb-item" data-app="mail">✉️</div>
+  <div id="clock"></div>
+</div>
+
+<div id="blackout"></div>
+
+<!-- 微信 App -->
+<div id="wechat-app">
+  <div class="wc-topbar">
+    <div class="back" id="wc-back">‹</div>
+    <div class="title" id="wc-title">微信</div>
+    <div class="right-btn" id="wc-right">＋</div>
+  </div>
+  <div id="wc-main">
+    <div id="wc-content"></div>
+    <div class="wc-tabbar" id="wc-tabbar">
+      <div class="wc-tab active" data-tab="chat"><div class="tab-icon">💬</div><div>微信</div></div>
+      <div class="wc-tab" data-tab="contacts"><div class="tab-icon">👤</div><div>通讯录</div></div>
+      <div class="wc-tab" data-tab="discover"><div class="tab-icon">🔍</div><div>发现</div></div>
+      <div class="wc-tab" data-tab="me"><div class="tab-icon">🙋</div><div>我</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- QQ App -->
+<div id="qq-app">
+  <div class="qq-topbar">
+    <div class="back" id="qq-back">‹</div>
+    <div class="title" id="qq-title">QQ</div>
+    <div class="right-btn" id="qq-right">≡</div>
+  </div>
+  <div id="qq-main">
+    <div id="qq-content"></div>
+    <div class="qq-tabbar" id="qq-tabbar">
+      <div class="qq-tab active" data-tab="msg"><div class="tab-icon">💬</div><div>消息</div></div>
+      <div class="qq-tab" data-tab="contacts"><div class="tab-icon">👥</div><div>联系人</div></div>
+      <div class="qq-tab" data-tab="space"><div class="tab-icon">🌐</div><div>空间</div></div>
+      <div class="qq-tab" data-tab="me"><div class="tab-icon">🙋</div><div>我的</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- 邮箱 App -->
+<div id="mail-app">
+  <div class="mail-topbar">
+    <div class="back" id="mail-back">‹</div>
+    <div class="title" id="mail-title">邮箱</div>
+  </div>
+  <div id="mail-main">
+    <div id="mail-content"></div>
+    <div class="mail-tabbar" id="mail-tabbar">
+      <div class="mail-tab active" data-tab="inbox"><div class="tab-icon">📥</div><div>收件</div></div>
+      <div class="mail-tab" data-tab="drafts"><div class="tab-icon">📝</div><div>草稿</div></div>
+      <div class="mail-tab" data-tab="sent"><div class="tab-icon">📤</div><div>已发</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- 微博 App -->
+<div id="weibo-app">
+  <div class="wb-topbar">
+    <div class="back" id="wb-back">‹</div>
+    <div class="title" id="wb-title">微博</div>
+  </div>
+  <div id="wb-main">
+    <div id="wb-content"></div>
+    <div class="wb-tabbar" id="wb-tabbar">
+      <div class="wb-tab active" data-tab="home"><div class="tab-icon">🏠</div><div>主页</div></div>
+      <div class="wb-tab" data-tab="likes"><div class="tab-icon">❤</div><div>赞</div></div>
+      <div class="wb-tab" data-tab="comments"><div class="tab-icon">💬</div><div>评论</div></div>
+      <div class="wb-tab" data-tab="follows"><div class="tab-icon">👥</div><div>关注</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- 浏览器 App -->
+<div id="browser-app">
+  <div class="br-topbar">
+    <div class="back" id="br-back">‹</div>
+    <div class="title" id="br-title">浏览器</div>
+  </div>
+  <div id="br-main">
+    <div id="br-content"></div>
+    <div class="br-tabbar" id="br-tabbar">
+      <div class="br-tab active" data-tab="history"><div class="tab-icon">🕐</div><div>历史</div></div>
+      <div class="br-tab" data-tab="bookmarks"><div class="tab-icon">⭐</div><div>书签</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- 敏感点覆盖层（选项版） -->
+<div id="wc-overlay">
+  <div id="wc-dialog">
+    <div id="wc-status">CONNECTION · C</div>
+    <div id="wc-asked"></div>
+    <div id="wc-options"></div>
+  </div>
+</div>
+
+<!-- 结局：Cents 接管 -->
+<div id="cents-end">
+  <div class="ce-bg"></div>
+  <div class="ce-scan"></div>
+  <div class="ce-inner">
+    <div class="ce-mark"><div class="ce-c">C</div></div>
+    <div>
+      <div class="ce-title">你 已 被 CENTS 标 记</div>
+      <div class="ce-sub">YOU HAVE BEEN MARKED · CONNECTION LOCKED</div>
+    </div>
+    <div class="ce-lines" id="ce-lines"></div>
+    <div class="ce-taunt" id="ce-taunt"></div>
+    <div class="ce-btn-wrap" id="ce-btn-wrap">
+      <button class="ce-btn good" id="ce-good">好</button>
+      <button class="ce-btn bad" id="ce-bad">不好</button>
+    </div>
+  </div>
+</div>
+
+<!-- 庆祝动画 -->
+<div id="ce-celebrate">
+  <canvas id="ce-canvas"></canvas>
+  <div class="ce-cel-text" id="ce-cel-text">
+    <span class="big">你 答 应 了 ♥</span>
+    <span class="small">CENTS 会一直陪着你</span>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   1. 全局
+   ============================================================ */
+const STATE = { playerName: '' };
+const APPS = [
+  { id:'wechat',  name:'微信',   glyph:'💬', cls:'g-wechat'  },
+  { id:'qq',      name:'QQ',     glyph:'🐧', cls:'g-qq'      },
+  { id:'weibo',   name:'微博',   glyph:'🌐', cls:'g-weibo'   },
+  { id:'mail',    name:'邮箱',   glyph:'✉️', cls:'g-mail'    },
+  { id:'browser', name:'浏览器', glyph:'🧭', cls:'g-browser' },
+];
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+/* ============================================================
+   2. 音效
+   ============================================================ */
+const Audio_ = {
+  ctx: null, master: null,
+  init() {
+    if (!this.ctx) {
+      try {
+        this.ctx = new (window.AudioContext||window.webkitAudioContext)();
+        this.master = this.ctx.createGain();
+        this.master.gain.value = 1;
+        this.master.connect(this.ctx.destination);
+      } catch(e) {}
+    }
+    if (this.ctx && this.ctx.state === 'suspended') this.ctx.resume();
+  },
+  tone(type, f1, f2, dur, vol) {
+    this.init(); if (!this.ctx) return;
+    const now = this.ctx.currentTime;
+    const o = this.ctx.createOscillator();
+    const g = this.ctx.createGain();
+    o.type = type;
+    o.frequency.setValueAtTime(f1, now);
+    if (f2 !== f1) o.frequency.exponentialRampToValueAtTime(Math.max(1,f2), now + dur);
+    g.gain.setValueAtTime(vol, now);
+    g.gain.exponentialRampToValueAtTime(0.0001, now + dur);
+    o.connect(g).connect(this.master);
+    o.start(now); o.stop(now + dur + 0.02);
+  },
+  click() { this.tone('triangle', 1500, 900, 0.055, 0.045); setTimeout(() => this.tone('square', 2400, 1800, 0.02, 0.02), 8); },
+  popYou() { this.tone('sine', 540, 380, 0.12, 0.05); },
+  popMe() { this.tone('sine', 880, 640, 0.09, 0.045); },
+  popSys() { this.tone('triangle', 380, 320, 0.1, 0.035); },
+  key() { this.tone('square', 950 + Math.random()*200, 900, 0.015, 0.012); },
+  warnCircle(step) {
+    const base = 180 - step * 18;
+    this.tone('sine', base, base * 0.55, 0.45, 0.09);
+    setTimeout(() => this.tone('sine', base*0.7, base*0.4, 0.3, 0.05), 60);
+  },
+  finalHit() {
+    this.tone('sawtooth', 65, 38, 1.4, 0.12);
+    setTimeout(() => this.tone('square', 420, 420, 0.16, 0.06), 300);
+    setTimeout(() => this.tone('square', 420, 420, 0.16, 0.06), 520);
+    setTimeout(() => this.tone('square', 420, 420, 0.16, 0.06), 740);
+    setTimeout(() => this.tone('square', 800 + Math.random()*400, 200, 0.12, 0.05), 1000);
+    setTimeout(() => this.tone('square', 1000 + Math.random()*400, 300, 0.1, 0.05), 1120);
+  },
+  heartbeat(vol=0.08) {
+    this.init(); if (!this.ctx) return;
+    const now = this.ctx.currentTime;
+    const o = this.ctx.createOscillator();
+    const g = this.ctx.createGain();
+    o.type = 'sine';
+    o.frequency.setValueAtTime(120, now);
+    o.frequency.exponentialRampToValueAtTime(45, now + 0.18);
+    g.gain.setValueAtTime(vol, now);
+    g.gain.exponentialRampToValueAtTime(0.0001, now + 0.25);
+    o.connect(g).connect(this.master);
+    o.start(now); o.stop(now + 0.3);
+  },
+  alertHit() {
+    this.tone('square', 800, 300, 0.12, 0.07);
+    setTimeout(() => this.tone('square', 600, 200, 0.15, 0.07), 130);
+  },
+  askPop() {
+    this.tone('sawtooth', 240, 120, 0.25, 0.08);
+    setTimeout(() => this.tone('sine', 900, 400, 0.2, 0.05), 50);
+  },
+  wrong() {
+    this.tone('square', 200, 100, 0.2, 0.08);
+    setTimeout(() => this.tone('square', 180, 80, 0.2, 0.07), 180);
+  },
+  right() {
+    this.tone('sine', 660, 990, 0.15, 0.05);
+    setTimeout(() => this.tone('sine', 880, 1320, 0.2, 0.05), 120);
+  },
+  blip(freq=880, dur=.06, vol=.04) { this.tone('sine', freq, freq*0.8, dur, vol); },
+  thud() { this.heartbeat(0.08); },
+  takeover() {
+    this.tone('sawtooth', 90, 45, 2.0, 0.11);
+    setTimeout(() => this.tone('square', 55, 30, 2.4, 0.07), 120);
+  },
+  celebrate() {
+    const notes = [330, 415, 495, 660, 830, 990];
+    notes.forEach((f, i) => {
+      setTimeout(() => this.tone('triangle', f, f*1.5, 0.22, 0.055), i*110);
+    });
+    setTimeout(() => this.tone('sine', 60, 40, 0.5, 0.1), 0);
+    setTimeout(() => this.tone('sine', 60, 40, 0.5, 0.1), 380);
+    setTimeout(() => this.tone('sine', 60, 40, 0.6, 0.1), 760);
+  }
+};
+
+/* ============================================================
+   3. 输入名字
+   ============================================================ */
+const nameScreen = document.getElementById('name-screen');
+const nameLine1  = document.getElementById('name-line1');
+const nameLine2  = document.getElementById('name-line2');
+const nameInput  = document.getElementById('name-input');
+const nameWrap   = document.getElementById('name-input-wrap');
+const nameConfirm = document.getElementById('name-confirm');
+
+async function typeText(el, text, speed=80) {
+  el.innerHTML = '';
+  const cur = document.createElement('span');
+  cur.className = 'cursor';
+  el.appendChild(cur);
+  for (let i=0;i<text.length;i++) {
+    cur.insertAdjacentText('beforebegin', text[i]);
+    if (text[i] !== ' ' && Math.random() < .4) Audio_.key();
+    let d = speed + Math.random()*30;
+    if ('，。！？、；：'.includes(text[i])) d += 260;
+    if (text[i] === '\n') d += 200;
+    await sleep(d);
+  }
+  cur.remove();
+}
+async function startNameScreen() {
+  await sleep(600);
+  await typeText(nameLine1, '在开始之前……', 110);
+  await sleep(900);
+  await typeText(nameLine2, '请告诉我，你的名字。', 100);
+  await sleep(400);
+  nameWrap.classList.add('show');
+  nameConfirm.classList.add('show');
+  nameInput.focus();
+}
+nameInput.addEventListener('input', () => {
+  nameConfirm.disabled = nameInput.value.trim().length === 0;
+  Audio_.key();
+});
+nameInput.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && !nameConfirm.disabled) { e.preventDefault(); confirmName(); }
+});
+nameConfirm.addEventListener('click', confirmName);
+async function confirmName() {
+  const n = nameInput.value.trim();
+  if (!n) return;
+  STATE.playerName = n;
+  Audio_.thud();
+  nameScreen.classList.add('fade');
+  await sleep(800);
+  nameScreen.remove();
+  startMonologue();
+}
+
+/* ============================================================
+   4. 独白
+   ============================================================ */
+const monologueEl = document.getElementById('monologue');
+const monologueText = document.getElementById('monologue-text');
+let monoSkip = false;
+
+async function startMonologue() {
+  const n = STATE.playerName;
+  const lines = [
+    `你叫${n}。`,``,
+    `四个月前，你在一个匿名论坛发了条帖子：`,
+    `"我不喜欢被找到，但我想被看见。"`,
+    `他是第一个回你的人。`,
+    `他说那论坛不安全，让你别用了。`,``,
+    `你们就这么聊上了。他叫 Cents，24 岁。`,
+    `他记得你说过的每一句话，`,
+    `你每次说睡不着，他都会陪你到天亮。`,
+    `你对他也越来越依赖。`,``,
+    `可四个月了，你不知道他叫什么、`,
+    `长什么样、在哪座城市。`,``,
+    `今天他半夜又给你发了 47 条消息。`,
+    `你看着屏幕，想了很久。`,
+    `决定，跟他分手。`,
+  ];
+  const text = lines.join('\n');
+  monologueEl.classList.add('active');
+  monologueText.innerHTML = '';
+  const cur = document.createElement('span');
+  cur.className = 'cursor';
+  monologueText.appendChild(cur);
+  document.getElementById('mono-skip').addEventListener('click', () => {
+    monoSkip = true;
+    Audio_.thud();
+    monologueEl.classList.add('fade');
+    setTimeout(() => {
+      if (monologueEl.parentNode) monologueEl.remove();
+      startPhone();
+    }, 400);
+  }, { once: true });
+  for (let i=0;i<text.length;i++) {
+    if (monoSkip) { cur.remove(); return; }
+    cur.insertAdjacentText('beforebegin', text[i]);
+    if (text[i] !== ' ' && Math.random() < .35) Audio_.key();
+    let d = 65 + Math.random()*30;
+    if ('，。！？、；：'.includes(text[i])) d += 260;
+    if (text[i] === '\n') d += 240;
+    await sleep(d);
+  }
+  cur.remove();
+  if (monoSkip) return;
+  await sleep(1000);
+  monologueEl.classList.add('fade');
+  await sleep(800);
+  monologueEl.remove();
+  startPhone();
+}
+function fillName(text) {
+  if (!text) return '';
+  return text.replace(/__NAME__/g, STATE.playerName || '你');
+}
+
+/* ============================================================
+   5. 聊天记录
+   ============================================================ */
+const phoneEl     = document.getElementById('phone');
+const phoneChat   = document.getElementById('phone-chat');
+const phoneDraft  = document.getElementById('phone-draft');
+const phoneSend   = document.getElementById('phone-send');
+const phoneInputBar = document.getElementById('phone-input-bar');
+const tapHint     = document.getElementById('tap-hint');
+const skipBtn     = document.getElementById('skip-btn');
+const autoBtn     = document.getElementById('auto-btn');
+const topActions  = document.getElementById('top-actions');
+
+const BASE = new Date();
+BASE.setHours(23, 0, 0, 0);
+function daysAgo(d, h, m) {
+  const t = new Date(BASE);
+  t.setDate(t.getDate() - d);
+  t.setHours(h, m, 0, 0);
+  const mm = String(t.getMonth()+1);
+  const dd = String(t.getDate());
+  const hh = String(t.getHours()).padStart(2,'0');
+  const mn = String(t.getMinutes()).padStart(2,'0');
+  return `${mm}月${dd}日 ${hh}:${mn}`;
+}
+
+const MESSAGES = [
+  { time:daysAgo(120,21,7) },
+  { who:'me',  text:'（你在论坛发了那条帖子）' },
+  { who:'me',  text:'"我不喜欢被找到，但我想被看见。"' },
+  { who:'you', text:'你还在用 Scope 吗。' },
+  { who:'me',  text:'你怎么知道我用。' },
+  { who:'you', text:'你帖子里的截图，有那个角标。' },
+  { who:'me',  text:'……' },
+  { who:'me',  text:'你谁啊。' },
+  { who:'you', text:'不重要。' },
+  { who:'you', text:'你别用那个论坛了，不安全。' },
+  { who:'me',  text:'关你什么事。' },
+  { who:'you', text:'不关。' },
+  { who:'you', text:'就是看见了，想跟你说一声。' },
+  { who:'me',  text:'……' },
+  { who:'me',  text:'你也在那个论坛？' },
+  { who:'you', text:'嗯。' },
+  { who:'me',  text:'你叫什么。' },
+  { who:'you', text:'Cents。' },
+  { who:'me',  text:'……这是什么名字。' },
+  { who:'you', text:'随便起的。' },
+
+  { time:daysAgo(117,23,51) },
+  { who:'you', text:'你今天上线晚了。' },
+  { who:'me',  text:'你等我？' },
+  { who:'you', text:'没有。' },
+  { who:'you', text:'随便看看。' },
+  { who:'you', text:'你昨天说的那件事，后来怎么样了。' },
+  { who:'me',  text:'哪件。' },
+  { who:'you', text:'你同事把锅甩给你那件。' },
+  { who:'me',  text:'……你还记得。' },
+  { who:'you', text:'我记性好。' },
+  { who:'you', text:'你今天是不是没吃晚饭。' },
+  { who:'me',  text:'你怎么知道。' },
+  { who:'you', text:'你昨天说今天要加班。' },
+  { who:'me',  text:'所以呢。' },
+  { who:'you', text:'加班会忘了吃。' },
+  { who:'me',  text:'……' },
+  { who:'you', text:'去吃。' },
+  { who:'me',  text:'你管我。' },
+  { who:'you', text:'嗯，我管。' },
+  { who:'me',  text:'……' },
+  { who:'me',  text:'晚安。' },
+  { who:'you', text:'晚安。' },
+
+  { time:daysAgo(114,14,22) },
+  { who:'me',  text:'你平时喜欢干嘛。' },
+  { who:'you', text:'写东西。' },
+  { who:'me',  text:'写什么。' },
+  { who:'you', text:'代码。不算东西。' },
+  { who:'me',  text:'那你就是没爱好。' },
+  { who:'you', text:'有。' },
+  { who:'you', text:'看你怎么回我。' },
+  { who:'me',  text:'油嘴滑舌。' },
+  { who:'you', text:'没有。' },
+  { who:'you', text:'我打字很慢。' },
+  { who:'you', text:'想半天才发一句。' },
+  { who:'me',  text:'骗人。' },
+  { who:'you', text:'真的。' },
+  { who:'you', text:'你不信下次我们语音。' },
+  { who:'me',  text:'谁要跟你语音。' },
+  { who:'you', text:'你。' },
+  { who:'me',  text:'……' },
+  { who:'you', text:'开玩笑的。' },
+  { who:'me',  text:'那你要是真打呢。' },
+  { who:'you', text:'我打。' },
+  { who:'me',  text:'你敢。' },
+  { who:'you', text:'那你怕什么。' },
+  { who:'me',  text:'我没怕。' },
+  { who:'you', text:'那你等。' },
+  { who:'me',  text:'等什么。' },
+  { who:'you', text:'等我打。' },
+
+  { time:daysAgo(113,22,40) },
+  { who:'you', text:'你今天说话比打字多。' },
+  { who:'me',  text:'因为我打字慢。' },
+  { who:'you', text:'不。' },
+  { who:'you', text:'是因为你今天开心。' },
+  { who:'me',  text:'你怎么知道。' },
+  { who:'you', text:'你说话的尾音会往上翘。' },
+  { who:'me',  text:'你研究我。' },
+  { who:'you', text:'嗯。' },
+  { who:'you', text:'研究很久了。' },
+  { who:'me',  text:'变态。' },
+  { who:'you', text:'只对你。' },
+  { who:'me',  text:'那你研究出什么了。' },
+  { who:'you', text:'你说话的时候喜欢摸头发。' },
+  { who:'me',  text:'你看得到？' },
+  { who:'you', text:'看不到。' },
+  { who:'you', text:'猜的。' },
+  { who:'me',  text:'猜的也算。' },
+  { who:'you', text:'那我再猜一个。' },
+  { who:'me',  text:'说。' },
+  { who:'you', text:'你今天穿的睡衣是那件灰色的。' },
+  { who:'me',  text:'……' },
+  { who:'me',  text:'你怎么知道。' },
+  { who:'you', text:'你上次说那件最舒服。' },
+  { who:'me',  text:'我随口说的。' },
+  { who:'you', text:'我记着。' },
+  { who:'me',  text:'（沉默）' },
+  { who:'you', text:'怎么不说话了。' },
+  { who:'me',  text:'没什么。' },
+  { who:'me',  text:'就是觉得……你有点好。' },
+  { who:'you', text:'那我以后更好一点。' },
+
+  { time:daysAgo(105,2,14) },
+  { who:'me',  text:'睡不着。' },
+  { who:'you', text:'我在。' },
+  { who:'me',  text:'你怎么还没睡。' },
+  { who:'you', text:'等你。' },
+  { who:'me',  text:'你怎么知道我会找你。' },
+  { who:'you', text:'不知道。' },
+  { who:'you', text:'所以一直醒着。' },
+  { who:'me',  text:'（沉默）' },
+  { who:'you', text:'不用说话。' },
+  { who:'you', text:'你躺着就好。' },
+  { who:'me',  text:'你不困吗。' },
+  { who:'you', text:'困。' },
+  { who:'you', text:'但你声音好听。' },
+  { who:'me',  text:'那我不说了。' },
+  { who:'you', text:'别。' },
+  { who:'you', text:'你说。' },
+  { who:'me',  text:'说什么。' },
+  { who:'you', text:'随便。' },
+  { who:'you', text:'讲你白天做了什么。' },
+  { who:'me',  text:'你白天不是都知道了吗。' },
+  { who:'you', text:'我想再听一遍。' },
+  { who:'me',  text:'……' },
+  { who:'me',  text:'Cents。' },
+  { who:'you', text:'嗯。' },
+  { who:'me',  text:'你为什么对我这么好。' },
+  { who:'you', text:'因为我喜欢你。' },
+  { who:'me',  text:'就这样？' },
+  { who:'you', text:'还有。' },
+  { who:'you', text:'我想让你觉得，遇到我是一件好事。' },
+  { who:'me',  text:'……你怎么这么会说话。' },
+  { who:'you', text:'我不太会。' },
+  { who:'you', text:'我只是想让你开心。' },
+  { who:'me',  text:'（沉默了一会儿）' },
+  { who:'me',  text:'我其实挺开心的。' },
+  { who:'you', text:'嗯。' },
+  { who:'you', text:'那我继续。' },
+
+  { time:daysAgo(92,19,26) },
+  { who:'you', text:'今天发工资。' },
+  { who:'you', text:'给你点。' },
+  { type:'obj', obj:'transfer1314' },
+  { who:'me',  text:'你干嘛。' },
+  { who:'you', text:'没什么。' },
+  { who:'me',  text:'什么叫没什么。' },
+  { who:'you', text:'想给。' },
+  { who:'me',  text:'我有钱。' },
+  { who:'you', text:'我知道。' },
+  { who:'you', text:'就想给。' },
+  { who:'me',  text:'我不收。' },
+  { who:'you', text:'那留着下次。' },
+  { who:'me',  text:'下次也不收。' },
+  { who:'you', text:'那就再下次。' },
+  { who:'me',  text:'……' },
+  { who:'me',  text:'你为什么老是突然转钱。' },
+  { who:'you', text:'因为我不能在你身边。' },
+  { who:'me',  text:'嗯。' },
+  { who:'you', text:'所以只能用这种方式。' },
+  { who:'me',  text:'什么方式。' },
+  { who:'you', text:'让你知道我在。' },
+  { who:'me',  text:'……' },
+  { who:'me',  text:'（收下了）' },
+  { who:'you', text:'嗯。' },
+  { who:'you', text:'谢谢你收下。' },
+  { who:'me',  text:'不用谢我。' },
+  { who:'me',  text:'应该我谢你。' },
+  { who:'you', text:'不用。' },
+  { who:'you', text:'你在我这就够了。' },
+
+  { time:daysAgo(92,19,41) },
+  { who:'you', text:'我刚才修了个东西。' },
+  { who:'you', text:'修了很久。' },
+  { who:'you', text:'录给你听。' },
+  { type:'obj', obj:'voice112' },
+  { who:'me',  text:'你没吃饭？' },
+  { who:'you', text:'嗯。' },
+  { who:'me',  text:'去吃饭。' },
+  { who:'you', text:'好。' },
+  { who:'you', text:'你也是。' },
+  { who:'me',  text:'Cents。' },
+  { who:'you', text:'嗯。' },
+  { who:'me',  text:'你不奇怪。' },
+  { who:'you', text:'真的吗。' },
+  { who:'me',  text:'真的。' },
+  { who:'me',  text:'我也想你。' },
+  { who:'you', text:'（过了一会儿）' },
+  { who:'you', text:'我今天晚上可以睡好了。' },
+
+  { time:daysAgo(79,16,8) },
+  { who:'you', text:'你之前说你不喜欢下雨。' },
+  { who:'me',  text:'嗯。' },
+  { who:'you', text:'今天下雨了。' },
+  { who:'me',  text:'我知道。' },
+  { who:'you', text:'你出门了吗。' },
+  { who:'me',  text:'出了。' },
+  { who:'you', text:'带伞了吗。' },
+  { who:'me',  text:'忘了。' },
+  { who:'you', text:'下次我提醒你。' },
+  { who:'me',  text:'你怎么提醒。' },
+  { who:'you', text:'看天气预报。' },
+  { who:'me',  text:'你还真记得。' },
+  { who:'you', text:'我记性一直很好。' },
+  { who:'you', text:'你上次说的那句话我还记着。' },
+  { who:'me',  text:'哪句。' },
+  { who:'you', text:'"我不喜欢被找到，但我想被看见。"' },
+  { who:'me',  text:'……' },
+  { who:'you', text:'你写在那篇帖子里的。' },
+  { who:'me',  text:'那篇我删了。' },
+  { who:'you', text:'我知道。' },
+  { who:'you', text:'我看的时候你还没删。' },
+  { who:'me',  text:'……' },
+  { who:'me',  text:'你连这个都翻。' },
+  { who:'you', text:'嗯。' },
+  { who:'you', text:'我想知道你在想什么。' },
+  { who:'me',  text:'那你直接问我不就好了。' },
+  { who:'you', text:'问了你会说吗。' },
+  { who:'me',  text:'……' },
+  { who:'you', text:'你看，你也不会说。' },
+  { who:'me',  text:'我没有不会说。' },
+  { who:'you', text:'那你现在告诉我。' },
+  { who:'me',  text:'告诉你什么。' },
+  { who:'you', text:'你现在在想什么。' },
+  { who:'me',  text:'（沉默）' },
+  { who:'you', text:'没关系。' },
+  { who:'you', text:'我可以等。' },
+
+  { time:daysAgo(78,20,18) },
+  { who:'you', text:'给你看个东西。' },
+  { who:'me',  text:'什么。' },
+  { who:'you', text:'我做的。' },
+  { who:'you', text:'你老失眠，我按你说的那些放一起了。' },
+  { type:'obj', obj:'playlist' },
+  { who:'me',  text:'__NAME__ 是谁。' },
+  { who:'you', text:'你的名字。' },
+  { who:'me',  text:'你哪知道我的名字。' },
+  { who:'you', text:'我不知道。' },
+  { who:'you', text:'我就是觉得，' },
+  { who:'you', text:'如果我叫你名字，你会不会开心一点。' },
+  { who:'me',  text:'……你怎么知道。' },
+  { who:'you', text:'猜的。' },
+  { who:'me',  text:'你猜对了。' },
+  { who:'you', text:'那我就开心了。' },
+  { who:'me',  text:'你开心什么。' },
+  { who:'you', text:'我猜对你的事了。' },
+  { who:'you', text:'这就是开心的事。' },
+  { who:'me',  text:'Cents。' },
+  { who:'you', text:'嗯。' },
+  { who:'me',  text:'谢谢你。' },
+  { who:'you', text:'不用。' },
+  { who:'you', text:'以后我给你做更多。' },
+
+  { time:daysAgo(73,1,41) },
+  { who:'you', text:'在吗。' },
+  { who:'me',  text:'在。' },
+  { who:'you', text:'问你个事。' },
+  { who:'me',  text:'嗯。' },
+  { who:'you', text:'你觉得我们现在算什么。' },
+  { who:'me',  text:'……什么算什么。' },
+  { who:'you', text:'算了。' },
+  { who:'you', text:'当我没问。' },
+  { who:'me',  text:'你问都问了。' },
+  { who:'me',  text:'你先答。' },
+  { who:'you', text:'我说我想跟你在一起。' },
+  { who:'you', text:'很久了。' },
+  { who:'me',  text:'多久。' },
+  { who:'you', text:'从你回我第一条消息开始。' },
+  { who:'me',  text:'那时候我才刚认识你。' },
+  { who:'you', text:'我也是。' },
+  { who:'you', text:'但我确定。' },
+  { who:'me',  text:'你怎么确定。' },
+  { who:'you', text:'因为我把你那句话记到现在。' },
+  { who:'me',  text:'哪句。' },
+  { who:'you', text:'你说"我不想被找到，但我想被看见"。' },
+  { who:'me',  text:'……' },
+  { who:'you', text:'所以我想让你被看见。' },
+  { who:'me',  text:'Cents。' },
+  { who:'you', text:'嗯。' },
+  { who:'me',  text:'我也很久了。' },
+  { who:'you', text:'多久。' },
+  { who:'me',  text:'从你跟我说"别用 Scope 了"那天。' },
+  { who:'you', text:'那天我才刚跟你说话。' },
+  { who:'me',  text:'嗯。' },
+  { who:'me',  text:'但你说的那四个字我记到现在。' },
+  { who:'you', text:'哪四个字。' },
+  { who:'me',  text:'别用了。' },
+  { who:'you', text:'……' },
+  { who:'me',  text:'你让我觉得你在乎我。' },
+  { who:'you', text:'（很久没回）' },
+  { who:'me',  text:'你在吗。' },
+  { who:'you', text:'在。' },
+  { who:'you', text:'我在打字。' },
+  { who:'you', text:'我打了三遍，删了三遍。' },
+  { who:'me',  text:'为什么。' },
+  { who:'you', text:'因为我不知道说什么。' },
+  { who:'me',  text:'你说你想说的。' },
+  { who:'you', text:'我想说……' },
+  { who:'you', text:'谢谢你。' },
+  { who:'me',  text:'谢我什么。' },
+  { who:'you', text:'谢谢你愿意。' },
+  { who:'me',  text:'我什么都没做。' },
+  { who:'you', text:'你回应我了。' },
+  { who:'you', text:'这就够了。' },
+  { who:'me',  text:'Cents。' },
+  { who:'you', text:'嗯。' },
+  { who:'me',  text:'那我们……算在一起了？' },
+  { who:'you', text:'……' },
+  { who:'you', text:'嗯。' },
+  { who:'you', text:'算。' },
+  { who:'me',  text:'你会不会觉得太快。' },
+  { who:'you', text:'不会。' },
+  { who:'you', text:'我等这天等很久了。' },
+  { who:'me',  text:'晚安。' },
+  { who:'you', text:'晚安。' },
+  { who:'you', text:'晚安。' },
+  { who:'you', text:'晚安。' },
+  { who:'me',  text:'你发三遍干嘛。' },
+  { who:'you', text:'开心。' },
+  { who:'me',  text:'那我也发三遍。' },
+  { who:'me',  text:'晚安。' },
+  { who:'me',  text:'晚安。' },
+  { who:'me',  text:'晚安。' },
+  { who:'you', text:'（过了一会儿）' },
+  { who:'you', text:'你知道吗，我刚刚笑了。' },
+  { who:'me',  text:'你笑什么。' },
+  { who:'you', text:'没什么。' },
+  { who:'you', text:'就是觉得，这样挺好。' },
+
+  { time:daysAgo(72,12,37) },
+  { who:'you', text:'你中午吃什么。' },
+  { who:'me',  text:'不知道。' },
+  { who:'you', text:'我给你点了。' },
+  { who:'me',  text:'你怎么知道我地址。' },
+  { who:'you', text:'你上次说你公司楼下有一家面馆。' },
+  { who:'me',  text:'那你怎么知道是哪家。' },
+  { who:'you', text:'你拍过一张照片。' },
+  { who:'you', text:'招牌上有名字。' },
+  { who:'me',  text:'……你连这个都记得。' },
+  { who:'you', text:'记得。' },
+  { who:'you', text:'五分钟就到。' },
+  { who:'me',  text:'你什么时候点的。' },
+  { who:'you', text:'十一点。' },
+  { who:'me',  text:'你怎么知道我十一点还没吃。' },
+  { who:'you', text:'你每天十二点之前都在忙。' },
+  { who:'you', text:'十二点才会饿。' },
+  { who:'me',  text:'你比我自己还了解我。' },
+  { who:'you', text:'嗯。' },
+  { who:'you', text:'因为我在意。' },
+  { who:'me',  text:'……' },
+  { who:'me',  text:'Cents。' },
+  { who:'you', text:'嗯。' },
+  { who:'me',  text:'你也吃。' },
+  { who:'you', text:'我吃过。' },
+  { who:'me',  text:'我不信。' },
+  { who:'you', text:'真吃过。' },
+  { who:'me',  text:'你拍了给我看。' },
+  { who:'you', text:'（过了一会儿）' },
+  { who:'you', text:'我没有。' },
+  { who:'me',  text:'我就知道。' },
+  { who:'me',  text:'去吃饭。' },
+  { who:'you', text:'等你吃完我就去。' },
+  { who:'me',  text:'为什么。' },
+  { who:'you', text:'想看你先吃。' },
+  { who:'me',  text:'你幼稚。' },
+  { who:'you', text:'嗯。' },
+  { who:'you', text:'你吃。' },
+  { who:'me',  text:'好。' },
+  { who:'me',  text:'那我吃完你要去。' },
+  { who:'you', text:'好。' },
+  { who:'me',  text:'说好了。' },
+  { who:'you', text:'说好了。' },
+
+  { time:daysAgo(71,22,7) },
+  { who:'me',  text:'你平时在哪写东西。' },
+  { who:'you', text:'书桌前。' },
+  { who:'you', text:'给你看。' },
+  { type:'obj', obj:'deskPhoto' },
+  { who:'me',  text:'很干净。' },
+  { who:'you', text:'嗯。' },
+  { who:'me',  text:'那本书是什么。' },
+  { who:'you', text:'忘了。' },
+  { who:'you', text:'很久以前的了。' },
+  { who:'me',  text:'你不看？' },
+  { who:'you', text:'看。' },
+  { who:'you', text:'看很多遍了。' },
+
+  { time:daysAgo(70,19,4) },
+  { who:'you', text:'你今天喝了几杯咖啡。' },
+  { who:'me',  text:'两杯。' },
+  { who:'you', text:'三杯。' },
+  { who:'me',  text:'你怎么知道。' },
+  { who:'you', text:'你早上说困，中午说困，下午还说困。' },
+  { who:'me',  text:'你还计数。' },
+  { who:'you', text:'不是计数。' },
+  { who:'you', text:'是不想你喝太多。' },
+  { who:'me',  text:'你管得真宽。' },
+  { who:'you', text:'嗯。' },
+  { who:'you', text:'我管得宽。' },
+  { who:'you', text:'那你明天喝两杯。' },
+  { who:'me',  text:'凭什么。' },
+  { who:'you', text:'因为我想让你睡好。' },
+  { who:'you', text:'你最近黑眼圈重了。' },
+  { who:'me',  text:'（沉默）' },
+  { who:'you', text:'我说错了吗。' },
+  { who:'me',  text:'没有。' },
+  { who:'me',  text:'你说得对。' },
+  { who:'you', text:'那就听我的。' },
+  { who:'you', text:'两杯。' },
+  { who:'me',  text:'你也一样。' },
+  { who:'you', text:'什么一样。' },
+  { who:'me',  text:'你也不许喝。' },
+  { who:'me',  text:'你昨天凌晨三点还在。' },
+  { who:'you', text:'……' },
+  { who:'me',  text:'你以为我不知道。' },
+  { who:'you', text:'你没睡。' },
+  { who:'me',  text:'我醒了。' },
+  { who:'me',  text:'看了下手机。' },
+  { who:'me',  text:'你还在线。' },
+  { who:'you', text:'（沉默）' },
+  { who:'you', text:'好。' },
+  { who:'you', text:'那我们一起少喝。' },
+  { who:'me',  text:'嗯。' },
+  { who:'you', text:'好。' },
+
+  { time:daysAgo(56,21,52) },
+  { who:'me',  text:'你上个月发的工资呢。' },
+  { who:'you', text:'花了。' },
+  { who:'me',  text:'花哪了。' },
+  { who:'you', text:'给你。' },
+  { type:'obj', obj:'transfer2888' },
+  { who:'me',  text:'你怎么又转。' },
+  { who:'me',  text:'上次那笔我都没花。' },
+  { who:'you', text:'那就一起存着。' },
+  { who:'me',  text:'我不要。' },
+  { who:'you', text:'不收我就再转一笔。' },
+  { who:'me',  text:'你……' },
+  { who:'me',  text:'你每次都这样。' },
+  { who:'you', text:'嗯。' },
+  { who:'you', text:'因为我不知道还能怎么对你好。' },
+  { who:'me',  text:'……' },
+  { who:'me',  text:'你陪我就好了。' },
+  { who:'you', text:'陪你是我应该做的。' },
+  { who:'you', text:'这个不算。' },
+  { who:'me',  text:'怎么不算。' },
+  { who:'you', text:'我想给你点实在的。' },
+  { who:'me',  text:'Cents。' },
+  { who:'you', text:'嗯。' },
+  { who:'me',  text:'我要的不是钱。' },
+  { who:'you', text:'我知道。' },
+  { who:'you', text:'但我想给。' },
+  { who:'me',  text:'那你给的时候不要让我觉得我在占你便宜。' },
+  { who:'you', text:'你从来没占我便宜。' },
+  { who:'you', text:'是我欠你。' },
+  { who:'me',  text:'你欠我什么。' },
+  { who:'you', text:'欠你一个，可以看得见的我。' },
+  { who:'me',  text:'（沉默）' },
+  { who:'me',  text:'（收下了）' },
+  { who:'you', text:'嗯。' },
+  { who:'you', text:'谢谢你收下。' },
+
+  { time:daysAgo(55,15,33) },
+  { who:'you', text:'给你看个东西。' },
+  { who:'me',  text:'又是什么。' },
+  { who:'you', text:'这次小一点。' },
+  { who:'you', text:'我照着我家画的。' },
+  { type:'obj', obj:'roomGif' },
+
+  { time:daysAgo(48,23,18) },
+  { who:'me',  text:'我今天想早点睡。' },
+  { who:'you', text:'好。' },
+  { who:'you', text:'你睡。' },
+  { who:'you', text:'我等你。' },
+  { who:'me',  text:'你别等了。' },
+  { who:'you', text:'没事。' },
+  { who:'you', text:'我醒着。' },
+  { who:'me',  text:'Cents。' },
+  { who:'you', text:'嗯。' },
+  { who:'me',  text:'你每天都说你醒着。' },
+  { who:'you', text:'因为我确实醒着。' },
+  { who:'me',  text:'你不睡吗。' },
+  { who:'you', text:'睡。' },
+  { who:'you', text:'但我睡之前会先看你一眼。' },
+  { who:'me',  text:'看什么。' },
+  { who:'you', text:'看你头像亮着。' },
+  { who:'you', text:'我就放心了。' },
+  { who:'me',  text:'（沉默）' },
+  { who:'you', text:'怎么了。' },
+  { who:'me',  text:'没什么。' },
+  { who:'me',  text:'我也想你。' },
+  { who:'you', text:'那你就睡。' },
+  { who:'you', text:'我陪你到睡着。' },
+  { who:'me',  text:'你会累的。' },
+  { who:'you', text:'不会。' },
+  { who:'you', text:'晚安。' },
+  { who:'me',  text:'晚安。' },
+  { who:'you', text:'晚安。' },
+  { who:'me',  text:'晚安。' },
+  { who:'you', text:'晚安。' },
+  { who:'me',  text:'晚安。' },
+  { time:daysAgo(48,4,12) },
+  { who:'you', text:'你睡了。' },
+  { who:'you', text:'晚安。' },
+
+  { time:daysAgo(47,12,3) },
+  { who:'me',  text:'Cents。' },
+  { who:'you', text:'嗯。' },
+  { who:'me',  text:'你有时候聊到一半就不说话了。' },
+  { who:'you', text:'……' },
+  { who:'me',  text:'你以为我没发现。' },
+  { who:'you', text:'……' },
+  { who:'me',  text:'我不是怪你。' },
+  { who:'me',  text:'我就是想帮你分担一点。' },
+  { who:'you', text:'你分担不了。' },
+  { who:'me',  text:'为什么。' },
+  { who:'you', text:'因为那些不关你的事。' },
+  { who:'me',  text:'你的事就是我的事。' },
+  { who:'you', text:'（很久没回）' },
+  { who:'you', text:'我知道了。' },
+  { who:'me',  text:'你知道了什么。' },
+  { who:'you', text:'我知道你愿意。' },
+  { who:'me',  text:'那你告诉我。' },
+  { who:'you', text:'再等一等。' },
+  { who:'me',  text:'等多久。' },
+  { who:'you', text:'等我想好怎么说。' },
+
+  { time:daysAgo(46,20,15) },
+  { who:'me',  text:'你又在干嘛。' },
+  { who:'you', text:'等你。' },
+  { who:'me',  text:'别老等我。' },
+  { who:'you', text:'嗯。' },
+  { who:'you', text:'（发了张小狗蹲守的表情包）' },
+  { who:'me',  text:'你哪来这么多狗。' },
+  { who:'you', text:'收藏的。' },
+  { who:'me',  text:'给我看看。' },
+  { type:'obj', obj:'stickersPack' },
+  { who:'me',  text:'……你收藏这么多。' },
+  { who:'you', text:'嗯。' },
+  { who:'you', text:'你说"忙"的时候我就发一张。' },
+  { who:'me',  text:'我什么时候说过。' },
+  { who:'you', text:'上周三。' },
+  { who:'you', text:'上上周四。' },
+  { who:'you', text:'还有很多次。' },
+  { who:'me',  text:'……' },
+  { who:'me',  text:'你记这些干嘛。' },
+  { who:'you', text:'我怕你烦。' },
+  { who:'me',  text:'我烦你什么。' },
+  { who:'you', text:'烦我老是找你。' },
+  { who:'me',  text:'我从来没说过烦。' },
+  { who:'you', text:'嗯。' },
+  { who:'you', text:'我知道。' },
+
+  { time:daysAgo(21,8,14) },
+  { who:'me',  text:'感冒了。' },
+  { who:'you', text:'发烧吗。' },
+  { who:'me',  text:'没有。' },
+  { who:'you', text:'几点开始。' },
+  { who:'me',  text:'昨晚。' },
+  { who:'you', text:'昨晚几点的。' },
+  { who:'me',  text:'两点多。' },
+  { who:'you', text:'你两点多还没睡。' },
+  { who:'me',  text:'我睡不着。' },
+  { who:'you', text:'我给你打电话。' },
+  { who:'me',  text:'不用。' },
+  { who:'you', text:'打。' },
+  { who:'me',  text:'真的不用。' },
+  { who:'you', text:'我打。' },
+  { who:'me',  text:'（没回）' },
+  { who:'you', text:'（他打过来了。）' },
+  { who:'you', text:'（你接了。）' },
+  { type:'obj', obj:'callLog347' },
+  { who:'you', text:'你睡了 47 分钟。' },
+  { who:'me',  text:'你一直听着？' },
+  { who:'you', text:'嗯。' },
+  { who:'me',  text:'你不会累吗。' },
+  { who:'you', text:'不累。' },
+  { who:'me',  text:'你也睡会儿吧。' },
+  { who:'you', text:'你先睡。' },
+  { who:'me',  text:'你不睡我也不睡。' },
+  { who:'you', text:'……' },
+  { who:'you', text:'好。' },
+  { who:'you', text:'那我们一起睡。' },
+  { who:'me',  text:'嗯。' },
+  { who:'me',  text:'不许挂。' },
+  { who:'you', text:'不挂。' },
+  { who:'me',  text:'说好了。' },
+  { who:'you', text:'说好了。' },
+
+  { time:daysAgo(14,23,47) },
+  { who:'me',  text:'Cents。' },
+  { who:'you', text:'嗯。' },
+  { who:'me',  text:'我朋友今天问我。' },
+  { who:'me',  text:'问我男朋友叫什么。' },
+  { who:'me',  text:'我答不上来。' },
+  { who:'you', text:'你就说 Cents。' },
+  { who:'me',  text:'我说了。' },
+  { who:'me',  text:'她说"这是什么名字"。' },
+  { who:'me',  text:'然后问我是哪的人，多大，长什么样。' },
+  { who:'me',  text:'我一个都答不上来。' },
+  { who:'you', text:'……' },
+  { who:'me',  text:'你到底叫什么。' },
+  { who:'you', text:'Cents。' },
+  { who:'me',  text:'真名。' },
+  { who:'you', text:'……' },
+  { who:'me',  text:'Cents。' },
+  { who:'you', text:'不重要。' },
+  { who:'me',  text:'怎么不重要。' },
+  { who:'me',  text:'我连我男朋友叫什么都不知道。' },
+  { who:'you', text:'（沉默）' },
+  { who:'me',  text:'我不是要查你。' },
+  { who:'me',  text:'我只是想知道，我男朋友，叫什么。' },
+  { who:'you', text:'……' },
+  { who:'me',  text:'哪怕你骗我也行。' },
+  { who:'you', text:'我不想骗你。' },
+  { who:'me',  text:'那你告诉我啊。' },
+  { who:'you', text:'……' },
+  { who:'me',  text:'我连你脸都没见过。' },
+  { who:'you', text:'你会不会失望。' },
+  { who:'me',  text:'什么。' },
+  { who:'you', text:'如果你看了，失望了。' },
+  { who:'me',  text:'我为什么会失望。' },
+  { who:'you', text:'因为我很普通。' },
+  { who:'me',  text:'Cents。' },
+  { who:'you', text:'嗯。' },
+  { who:'me',  text:'你听我说。' },
+  { who:'you', text:'嗯。' },
+  { who:'me',  text:'我喜欢你，不是因为你的脸。' },
+  { who:'me',  text:'是因为你记得我所有的话。' },
+  { who:'me',  text:'是因为你半夜不睡就为了等我。' },
+  { who:'me',  text:'是因为你说"你在我这不用装"。' },
+  { who:'you', text:'（沉默）' },
+  { who:'me',  text:'所以你能不能别躲了。' },
+  { who:'you', text:'……我还没准备好。' },
+  { who:'me',  text:'那我等你。' },
+  { who:'you', text:'你不用等我。' },
+  { who:'me',  text:'我等你。' },
+  { who:'you', text:'（很久没有回）' },
+  { who:'you', text:'晚安。' },
+  { who:'me',  text:'晚安。' },
+  { who:'me',  text:'我等你。' },
+
+  { time:daysAgo(11,23,47) },
+  { text:'（他三天没提这件事）', sys:true },
+
+  { time:daysAgo(10,2,11) },
+  { who:'you', text:'睡不着。' },
+  { who:'me',  text:'怎么了。' },
+  { who:'you', text:'写了个东西。' },
+  { who:'me',  text:'发我看看。' },
+  { who:'you', text:'你看了别笑我。' },
+  { who:'me',  text:'不笑。' },
+  { type:'obj', obj:'todoList' },
+  { who:'me',  text:'最后一条。' },
+  { who:'you', text:'嗯。' },
+  { who:'me',  text:'你什么时候改的。' },
+  { who:'you', text:'刚刚。' },
+  { who:'me',  text:'我没觉得你烦。' },
+  { who:'you', text:'嗯。' },
+  { who:'you', text:'我信你。' },
+  { who:'you', text:'你睡吧。' },
+  { who:'me',  text:'你过来。' },
+  { who:'you', text:'什么。' },
+  { who:'me',  text:'你过来睡。' },
+  { who:'you', text:'我睡不着。' },
+  { who:'me',  text:'那你陪我。' },
+  { who:'you', text:'好。' },
+  { who:'me',  text:'你别改那条。' },
+  { who:'you', text:'哪条。' },
+  { who:'me',  text:'最后那条。' },
+  { who:'you', text:'……' },
+  { who:'me',  text:'你改回来。' },
+  { who:'you', text:'改不回。' },
+  { who:'me',  text:'为什么。' },
+  { who:'you', text:'因为我确实怕。' },
+  { who:'me',  text:'怕什么。' },
+  { who:'you', text:'怕有一天你真的觉得。' },
+  { who:'me',  text:'Cents。' },
+  { who:'you', text:'嗯。' },
+  { who:'me',  text:'我不会。' },
+  { who:'you', text:'嗯。' },
+  { who:'you', text:'我知道了。' },
+  { who:'you', text:'你睡吧。' },
+  { who:'me',  text:'你也睡。' },
+  { who:'you', text:'好。' },
+  { who:'you', text:'晚安。' },
+  { who:'me',  text:'晚安。' },
+
+  { time:daysAgo(8,19,22) },
+  { who:'me',  text:'今天跟陈凯吃了个饭。' },
+  { who:'you', text:'谁。' },
+  { who:'me',  text:'同事。' },
+  { who:'me',  text:'上个月帮我顶了个活。' },
+  { who:'you', text:'男的女的。' },
+  { who:'me',  text:'男的。' },
+  { who:'you', text:'……' },
+  { who:'me',  text:'怎么了。' },
+  { who:'you', text:'没什么。' },
+  { who:'you', text:'吃的什么。' },
+  { who:'me',  text:'楼下那家面馆。' },
+  { who:'you', text:'几点。' },
+  { who:'me',  text:'六点半。' },
+  { who:'me',  text:'吃到八点。' },
+  { who:'you', text:'……' },
+  { who:'me',  text:'Cents。' },
+  { who:'you', text:'嗯。' },
+  { who:'me',  text:'你是在生气吗。' },
+  { who:'you', text:'没有。' },
+  { who:'me',  text:'那你为什么不回。' },
+  { who:'you', text:'我在打字。' },
+  { who:'me',  text:'你打了三分钟。' },
+  { who:'you', text:'……' },
+  { who:'me',  text:'Cents。' },
+  { who:'you', text:'嗯。' },
+  { who:'me',  text:'以后能不能别问我几点几分。' },
+  { who:'me',  text:'我不是在跟你汇报。' },
+  { who:'you', text:'我知道。' },
+  { who:'me',  text:'你不知道。' },
+  { who:'me',  text:'你连我几点喝咖啡都记。' },
+  { who:'you', text:'……' },
+  { who:'me',  text:'对不起。' },
+  { who:'me',  text:'我不是说你不好。' },
+  { who:'you', text:'我知道。' },
+  { who:'you', text:'是我不好。' },
+  { who:'me',  text:'没有。' },
+  { who:'you', text:'你别管我。' },
+  { who:'you', text:'你吃你的。' },
+  { who:'me',  text:'……' },
+
+  { time:daysAgo(7,21,32) },
+  { who:'me',  text:'我在论坛发了个帖子。' },
+  { who:'you', text:'哪个论坛。' },
+  { who:'me',  text:'就我们认识的那个。' },
+  { who:'you', text:'你发什么了。' },
+  { who:'me',  text:'……你自己看。' },
+  { type:'obj', obj:'forumPost' },
+
+  { time:daysAgo(6,20,15) },
+  { who:'you', text:'你写的那条我看到了。' },
+  { who:'me',  text:'……' },
+  { who:'me',  text:'你怎么在这个论坛。' },
+  { who:'you', text:'我一直都在。' },
+  { who:'me',  text:'你从什么时候开始的。' },
+  { who:'you', text:'从你说"别用了"那天之后。' },
+  { who:'me',  text:'你在看我。' },
+  { who:'you', text:'嗯。' },
+  { who:'me',  text:'你看了多久。' },
+  { who:'you', text:'四个月。' },
+  { who:'me',  text:'……' },
+  { who:'me',  text:'Cents。' },
+  { who:'you', text:'嗯。' },
+  { who:'me',  text:'你到底是谁。' },
+  { who:'you', text:'……' },
+  { who:'you', text:'你先睡。' },
+  { who:'you', text:'明天再说。' },
+  { who:'me',  text:'你每次都说"明天再说"。' },
+  { who:'you', text:'……' },
+
+  { time:daysAgo(3,3,47) },
+  { who:'you', text:'__NAME__。' },
+  { who:'you', text:'你还在吗。' },
+  { text:'（你从来没告诉过他你的全名。）', sys:true },
+  { who:'you', text:'你别怕。' },
+  { who:'you', text:'我不是在查你。' },
+  { who:'you', text:'我只是想叫你一次。' },
+  { who:'you', text:'就一次。' },
+  { who:'you', text:'我不叫你全名了。' },
+  { who:'you', text:'你睡吧。' },
+
+  { time:daysAgo(0,22,47) },
+  { who:'you', text:'你最近怎么了。' },
+  { who:'you', text:'你不像之前那样回我了。' },
+  { who:'you', text:'是不是我做错了什么。' },
+  { who:'you', text:'你告诉我。' },
+  { who:'you', text:'我可以改。' },
+  { text:'（你没回）', sys:true },
+  { who:'you', text:'你在吗。' },
+  { who:'you', text:'你在看吗。' },
+  { who:'you', text:'你看着我头像变灰了吗。' },
+  { who:'you', text:'你别吓我。' },
+  { who:'you', text:'我刚刚数了。' },
+  { who:'you', text:'我今天给你发了 47 条。' },
+  { who:'you', text:'你一条都没回。' },
+  { who:'you', text:'你是不是不要我了。' },
+  { text:'（你没回）', sys:true },
+];
+
+let msgIdx = -1;
+let phoneFinished = false;
+let waitingForObject = false;
+let corruptIdx = -1;
+let phoneCorrupted = false;
+
+/* ============================================================
+   6. 物件
+   ============================================================ */
+const OBJECTS = {
+  transfer1314: { icon:'💸', title:'转账', main:'¥1314.00', sub:'点击查看明细',
+    html: () => `<div class="amount">¥ 1314.00</div><div class="amount-sub">备注：（空）</div><div class="note">转账时间：19:26<br>状态：<b>已收款</b></div>` },
+  transfer2888: { icon:'💸', title:'转账', main:'¥2888.00', sub:'点击查看明细',
+    html: () => `<div class="amount">¥ 2888.00</div><div class="amount-sub">备注：买点你想买的。</div><div class="note">转账时间：21:52<br>状态：<b>已收款</b></div>` },
+  voice112: { icon:'🎙️', title:'语音', main:'1 分 12 秒', sub:'点击转文字',
+    html: () => `
+      <div class="voice"><div class="wave">${Array.from({length:36}).map((_,i)=>`<i style="animation-delay:${i*0.05}s"></i>`).join('')}</div></div>
+      <div class="voice-text">"我今天……修了个东西。<br><br>修了很久，一直修不好。<br><br>然后突然就想，<br>如果你在旁边的话，<br>我可能就没那么烦了。<br><br>你不用说话。<br>你坐在那儿就行。<br><br>……我是不是有点奇怪。<br><br>算了。<br><br>你吃饭了吗。"<div style="text-align:right;color:#8e8e93;font-size:11px;margin-top:8px;font-style:normal">（末尾有一声很轻的笑）</div></div>
+    ` },
+  playlist: { icon:'🎧', title:'文件', main:'你的深夜歌单.html', sub:'他做的',
+    html: () => `
+      <div class="file-paper" style="font-family:-apple-system,sans-serif;background:#0f1a2e;color:#a8c0e0;border-color:#1e2e4a">
+        <div style="text-align:center;font-size:18px;color:#7ab0f0;margin-bottom:16px;letter-spacing:2px">给 ${STATE.playerName || '你'} 的深夜歌单</div>
+        <div style="font-size:13px;line-height:2.2">
+          🎵 Rainy Days<br><span style="color:#5a7a9a;font-size:11px">—— 你说你失眠的时候听的</span><br><br>
+          🎵 The Long Way Home<br><span style="color:#5a7a9a;font-size:11px">—— 你说你下班坐错站的那天听的</span><br><br>
+          🎵 Slow Dancing<br><span style="color:#5a7a9a;font-size:11px">—— 你说你想去跳舞但不会跳</span><br><br>
+          🎵 Little Talks<br><span style="color:#5a7a9a;font-size:11px">—— 你说你想找个人说话但不知道说什么</span><br><br>
+          <span style="color:#5a7a9a">……（还有 8 首）</span>
+        </div>
+        <div style="margin-top:20px;padding-top:16px;border-top:1px solid #1e2e4a;color:#7ab0f0;font-size:13px;line-height:1.9">我知道你睡不着。<br>所以我把你喜欢的都放一起了。<br>不用谢。</div>
+      </div>
+    ` },
+  deskPhoto: { icon:'🖼️', title:'图片', main:'一张书桌', sub:'点击查看',
+    html: () => `
+      <div style="width:100%;height:200px;border-radius:12px;margin:8px 0;background:linear-gradient(180deg,#2a1f18 0%,#3a2a20 50%,#1a1510 100%);position:relative;overflow:hidden;border:1px solid rgba(0,0,0,.1)">
+        <div style="position:absolute;top:30%;left:20%;width:60%;height:20px;background:rgba(255,200,100,.3);border-radius:2px"></div>
+        <div style="position:absolute;top:50%;left:15%;width:70%;height:60px;background:rgba(60,40,30,.7);border-radius:4px"></div>
+        <div style="position:absolute;top:42%;left:65%;width:15px;height:40px;background:rgba(255,220,150,.7);border-radius:2px;box-shadow:0 0 30px rgba(255,200,100,.4)"></div>
+        <div style="position:absolute;top:38%;left:15%;width:24px;height:32px;background:rgba(80,60,40,.9);border-radius:3px"></div>
+      </div>
+      <div class="note">一张很干净的书桌。<br><br>桌上有一台笔记本，一杯水，<br>一盏台灯，还有一个小小的盆栽。<br><br>台灯是暖色的。<br><br>桌角放着一本很旧的书，<br>封面看不清。</div>
+    ` },
+  roomGif: { icon:'🎞️', title:'文件', main:'room.gif', sub:'点击播放',
+    html: () => `
+      <div style="width:100%;height:200px;border-radius:12px;margin:8px 0;background:#1a1a24;position:relative;overflow:hidden;border:1px solid rgba(0,0,0,.1)">
+        <div style="position:absolute;bottom:0;left:0;right:0;height:40%;background:linear-gradient(180deg,transparent,#0d0d14)"></div>
+        <div style="position:absolute;top:15%;left:8%;width:18%;height:55%;background:rgba(255,255,255,.08);border-radius:2px"></div>
+        <div style="position:absolute;top:30%;left:32%;width:30%;height:35%;background:rgba(255,255,255,.12);border-radius:4px"></div>
+        <div style="position:absolute;bottom:25%;left:40%;width:8px;height:8px;background:#7ab0f0;border-radius:50%;animation:blink 1.5s infinite"></div>
+        <div style="position:absolute;bottom:25%;left:60%;width:8px;height:8px;background:#e6a04a;border-radius:50%;animation:blink 2s infinite"></div>
+      </div>
+      <div class="note">一个很小的动画。<br><br>画面里是一间房间，<br>一张床，一个书架，一扇窗。<br><br>窗边有一把椅子。<br><br>一个小人坐在椅子上，<br>另一个小人在床上写字。<br><br>坐着的那个什么也没做，<br>只是看着。<br><br>画面循环。</div>
+    ` },
+  todoList: { icon:'📄', title:'文件', main:'待办.txt', sub:'点击查看',
+    html: () => `
+      <div class="file-paper">1. 跟她一起看一次日出<br>2. 学会做她喜欢的那家面馆的面<br>3. 陪她加班到凌晨，然后一起走回家<br>4. 她生日那天不要忘<br>5. 她怕打雷，要记得<br>6. 给她买她说过的那本绝版书<br>7. 带她去看海<br>8. 听她讲一遍她的小说<br>9. 她哭的时候不要问为什么，抱着就好<br>10. 不要让她觉得我烦<br><br>
+        <div style="font-size:12px;color:#999;font-style:italic;margin-top:12px">（最后一条被人改过，<br>原本写的是"不要让她觉得我烦"，<br>后来加了一行小字：）</div>
+        <div style="color:#c41e2c;font-size:13px;margin-top:10px">"但她已经觉得了。"</div>
+      </div>
+    ` },
+  stickersPack: { icon:'🐶', title:'表情包', main:'他收藏的', sub:'点击查看全部',
+    html: () => `
+      <div class="sticker-grid">
+        <div class="sk"><div class="emo">🐕</div><div class="cap">小狗蹲守</div><div class="count">发过 27 次</div></div>
+        <div class="sk"><div class="emo">🐱</div><div class="cap">小猫举爪</div><div class="count">发过 4 次</div></div>
+        <div class="sk"><div class="emo">🐧</div><div class="cap">企鹅发呆</div><div class="count">你说"忙"就发</div></div>
+        <div class="sk"><div class="emo">🦊</div><div class="cap">狐狸趴桌</div><div class="count">发过 11 次</div></div>
+      </div>
+    ` },
+  callLog347: { icon:'📞', title:'通话记录', main:'3 小时 47 分', sub:'点击转文字',
+    html: () => `
+      <div class="call-log">
+        <div class="row"><span>类型</span><span>语音通话</span></div>
+        <div class="row"><span>时长</span><span>3 小时 47 分</span></div>
+        <div class="row"><span>发起</span><span>Cents</span></div>
+        <div class="row"><span>接听</span><span>你（第 3 声接起）</span></div>
+      </div>
+      <div class="voice-text">【转文字 · 前 5 分钟】<br><br>"你声音有点哑。昨晚几点睡的。"<br>"嗯。"<br>"你不想说话。没关系。"<br>"我就开着。你困了就睡。"<br><br><span style="color:#8e8e93">【转文字 · 中间 3 小时 30 分】</span><br><br><span style="color:#8e8e93">（无对话。只有呼吸声。偶尔有翻身的窸窣声。）</span><br><br>【转文字 · 最后 12 分钟】<br><br>"你睡吧。"<br>"我不挂。"<br>"我听着你的呼吸就行。"<br>"晚安。"</div>
+    ` },
+  forumPost: { icon:'📝', title:'论坛帖子', main:'你发的', sub:'点击查看',
+    html: () => `
+      <div class="note" style="background:#fff;border:1px solid rgba(0,0,0,.08);text-align:left;padding:18px">
+        <div style="font-size:12px;color:#8e8e93;margin-bottom:8px">【奇怪现象】板块 · 楼主 ${STATE.playerName || '你'}</div>
+        <div style="font-size:15px;font-weight:600;color:#111;margin-bottom:12px;line-height:1.6">有没有人谈过一种恋爱，<br>对方什么都好，<br>好到你挑不出问题。<br>但你越来越喘不过气。</div>
+        <div style="font-size:14px;color:#333;line-height:1.9">不是他不好。<br>是我不好。</div>
+      </div>
+    ` },
+};
+
+/* ============================================================
+   7. 聊天渲染
+   ============================================================ */
+function startPhone() {
+  phoneEl.classList.add('active');
+  phoneChat.innerHTML = '';
+  msgIdx = -1;
+  phoneFinished = false;
+  waitingForObject = false;
+  phoneCorrupted = false;
+  corruptIdx = -1;
+  topActions.classList.add('show');
+  stopAuto();
+  updateTapHint();
+}
+function updateTapHint() {
+  if (phoneFinished) { tapHint.style.display = 'none'; return; }
+  if (waitingForObject) tapHint.textContent = '点 开 它';
+  else tapHint.textContent = '点 击 屏 幕 继 续';
+  tapHint.style.display = 'block';
+}
+function pushNextMessage() {
+  msgIdx++;
+  if (msgIdx >= MESSAGES.length) { finishPhone(); stopAuto(); return; }
+  const m = MESSAGES[msgIdx];
+  if (m.time) {
+    const t = document.createElement('div');
+    t.className = 'time-divider';
+    t.textContent = m.time;
+    phoneChat.appendChild(t);
+  }
+  if (m.type === 'obj') {
+    waitingForObject = true;
+    updateTapHint();
+    const obj = OBJECTS[m.obj];
+    if (!obj) return;
+    const card = document.createElement('div');
+    card.className = 'msg special show';
+    const c = document.createElement('div');
+    c.className = 'special-card';
+    c.style.animation = 'pulseBorder 1.4s infinite';
+    c.innerHTML = `
+      <div class="obj-icon">${obj.icon}</div>
+      <div class="obj-info">
+        <div class="obj-label">${obj.title}</div>
+        <div class="obj-main">${obj.main}</div>
+        <div class="obj-sub">${obj.sub}</div>
+      </div>`;
+    c.addEventListener('click', e => {
+      e.stopPropagation();
+      openDrawer(m.obj, () => {
+        c.style.animation = 'none';
+        waitingForObject = false;
+        updateTapHint();
+      });
+    });
+    card.appendChild(c);
+    phoneChat.appendChild(card);
+    Audio_.popYou();
+    stopAuto();
+  } else if (m.sys) {
+    const s = document.createElement('div');
+    s.className = 'msg show';
+    s.style.justifyContent = 'center';
+    s.innerHTML = `<div style="font-size:11px;color:#8e8e93;text-align:center;padding:6px 12px;letter-spacing:.5px">${fillName(m.text)}</div>`;
+    phoneChat.appendChild(s);
+    Audio_.popSys();
+  } else {
+    const el = document.createElement('div');
+    el.className = 'msg ' + m.who;
+    el.innerHTML = `<div class="bubble-msg">${fillName(m.text)}</div>`;
+    phoneChat.appendChild(el);
+    requestAnimationFrame(() => el.classList.add('show'));
+    if (m.who === 'you') Audio_.popYou(); else Audio_.popMe();
+  }
+  phoneChat.scrollTop = phoneChat.scrollHeight;
+}
+
+let autoTimer = null;
+let autoSpeed = 0;
+function startAuto() {
+  stopAuto();
+  if (autoSpeed === 0) return;
+  const interval = 900 / autoSpeed;
+  autoTimer = setInterval(() => {
+    if (phoneFinished) { stopAuto(); return; }
+    if (waitingForObject) return;
+    if (phoneInputBar.classList.contains('active')) return;
+    pushNextMessage();
+  }, interval);
+}
+function stopAuto() { if (autoTimer) { clearInterval(autoTimer); autoTimer = null; } }
+autoBtn.addEventListener('click', e => {
+  e.stopPropagation();
+  autoSpeed = (autoSpeed + 1) % 4;
+  autoBtn.textContent = autoSpeed === 0 ? '自动 1x' : `自动 ${autoSpeed}x`;
+  autoBtn.classList.toggle('playing', autoSpeed > 0);
+  if (autoSpeed === 0) stopAuto(); else startAuto();
+});
+
+skipBtn.addEventListener('click', e => {
+  e.stopPropagation();
+  if (phoneCorrupted) {
+    topActions.classList.remove('show');
+    tapHint.style.display = 'none';
+    phoneEl.classList.remove('active');
+    startWarningScene();
+    return;
+  }
+  stopAuto();
+  phoneChat.innerHTML = '';
+  MESSAGES.forEach(m => {
+    if (m.time) {
+      const t = document.createElement('div');
+      t.className = 'time-divider';
+      t.textContent = m.time;
+      phoneChat.appendChild(t);
+    }
+    if (m.type === 'obj') {
+      const obj = OBJECTS[m.obj];
+      if (!obj) return;
+      const card = document.createElement('div');
+      card.className = 'msg special show';
+      card.innerHTML = `<div class="special-card"><div class="obj-icon">${obj.icon}</div><div class="obj-info"><div class="obj-label">${obj.title}</div><div class="obj-main">${obj.main}</div><div class="obj-sub">已跳过</div></div></div>`;
+      phoneChat.appendChild(card);
+    } else if (m.sys) {
+      const s = document.createElement('div');
+      s.className = 'msg show';
+      s.style.justifyContent = 'center';
+      s.innerHTML = `<div style="font-size:11px;color:#8e8e93;text-align:center;padding:6px 12px;letter-spacing:.5px">${fillName(m.text)}</div>`;
+      phoneChat.appendChild(s);
+    } else if (m.who) {
+      const el = document.createElement('div');
+      el.className = 'msg ' + m.who + ' show';
+      el.innerHTML = `<div class="bubble-msg">${fillName(m.text)}</div>`;
+      phoneChat.appendChild(el);
+    }
+  });
+  msgIdx = MESSAGES.length - 1;
+  phoneChat.scrollTop = phoneChat.scrollHeight;
+  setTimeout(() => finishPhone(), 300);
+});
+
+phoneEl.addEventListener('click', e => {
+  if (e.target.closest('#drawer') || e.target.closest('#drawer-backdrop')) return;
+  if (e.target.closest('.special-card')) return;
+  if (e.target.closest('#phone-input-bar')) return;
+  if (e.target.closest('#top-actions')) return;
+  if (phoneCorrupted && corruptIdx >= 0) { Audio_.click(); pushCorruptLine(); return; }
+  if (phoneFinished) return;
+  if (phoneInputBar.classList.contains('active')) return;
+  if (waitingForObject) return;
+  if (autoSpeed > 0) { autoSpeed = 0; autoBtn.textContent = '自动 1x'; autoBtn.classList.remove('playing'); stopAuto(); }
+  Audio_.click();
+  pushNextMessage();
+});
+
+/* ============================================================
+   8. 物件抽屉
+   ============================================================ */
+const drawer = document.getElementById('drawer');
+const drawerContent = document.getElementById('drawer-content');
+const drawerBackdrop = document.getElementById('drawer-backdrop');
+const drawerClose = document.getElementById('drawer-close');
+let drawerOnClose = null;
+function openDrawer(objKey, onClose) {
+  const obj = OBJECTS[objKey];
+  if (!obj) return;
+  drawerContent.innerHTML = `<h3>${obj.title} · ${obj.main}</h3>${obj.html()}`;
+  drawer.classList.add('open');
+  drawerBackdrop.classList.add('open');
+  Audio_.blip(300, .1, .04);
+  drawerOnClose = onClose || null;
+}
+function closeDrawer() {
+  drawer.classList.remove('open');
+  drawerBackdrop.classList.remove('open');
+  if (drawerOnClose) { drawerOnClose(); drawerOnClose = null; }
+}
+drawerClose.addEventListener('click', closeDrawer);
+drawerBackdrop.addEventListener('click', closeDrawer);
+
+/* ============================================================
+   9. 结束 → 草稿 → 变红
+   ============================================================ */
+function finishPhone() {
+  phoneFinished = true;
+  tapHint.style.display = 'none';
+  phoneInputBar.classList.add('active');
+  phoneDraft.value = '';
+  phoneSend.classList.remove('ready');
+  phoneSend.dataset.sent = '';
+  setTimeout(() => {
+    const draft = '我们分手吧。';
+    let idx = 0;
+    const t = setInterval(() => {
+      if (idx >= draft.length) {
+        clearInterval(t);
+        phoneSend.classList.add('ready');
+        phoneDraft.classList.add('filled');
+        return;
+      }
+      phoneDraft.value += draft[idx];
+      idx++;
+      Audio_.key();
+    }, 220);
+  }, 1000);
+}
+phoneSend.addEventListener('click', async () => {
+  if (phoneSend.dataset.sent === '1') return;
+  phoneSend.dataset.sent = '1';
+  if (!phoneSend.classList.contains('ready')) return;
+  Audio_.thud();
+  phoneInputBar.style.display = 'none';
+  tapHint.style.display = 'none';
+  topActions.classList.remove('show');
+  const showSys = (text, wait) => new Promise(res => {
+    const s = document.createElement('div');
+    s.className = 'msg show';
+    s.style.justifyContent = 'center';
+    s.innerHTML = `<div style="font-size:11px;color:#8e8e93;text-align:center;padding:6px 12px">${text}</div>`;
+    phoneChat.appendChild(s);
+    phoneChat.scrollTop = phoneChat.scrollHeight;
+    setTimeout(res, wait);
+  });
+  await showSys('—— 对方已读 ——', 900);
+  await showSys('—— 对方正在输入…… ——', 1300);
+  await showSys('—— 对方停止输入 ——', 1400);
+  await sleep(1600);
+  phoneEl.classList.add('corrupted');
+  phoneEl.classList.add('shaking');
+  Audio_.thud();
+  if (navigator.vibrate) { try { navigator.vibrate([80, 40, 120, 40, 200]); } catch(e) {} }
+  setTimeout(() => phoneEl.classList.remove('shaking'), 520);
+  await sleep(1800);
+  startCorruptChat();
+});
+
+/* ============================================================
+   10. 被入侵后
+   ============================================================ */
+const CORRUPT_LINES = [
+  {who:'you', text:'你删了我。'},
+  {who:'you', text:'我看得到。'},
+  {who:'you', text:'你把我删了，我还在。'},
+  {who:'you', text:'你为什么。'},
+  {who:'you', text:'我哪里做错了。'},
+  {who:'you', text:'你告诉我。'},
+  {who:'you', text:'我改。'},
+];
+function startCorruptChat() {
+  phoneCorrupted = true;
+  corruptIdx = -1;
+  topActions.classList.add('show');
+  tapHint.textContent = '点 击 屏 幕 继 续';
+  tapHint.style.display = 'block';
+  setTimeout(() => pushCorruptLine(), 800);
+}
+function pushCorruptLine() {
+  corruptIdx++;
+  if (corruptIdx >= CORRUPT_LINES.length) {
+    topActions.classList.remove('show');
+    tapHint.style.display = 'none';
+    setTimeout(() => {
+      phoneEl.classList.remove('active');
+      startWarningScene();
+    }, 1400);
+    return;
+  }
+  const line = CORRUPT_LINES[corruptIdx];
+  const el = document.createElement('div');
+  el.className = 'msg ' + line.who;
+  el.style.animation = 'msgIn .3s ease-out';
+  el.innerHTML = `<div class="bubble-msg">${fillName(line.text)}</div>`;
+  phoneChat.appendChild(el);
+  requestAnimationFrame(() => el.classList.add('show'));
+  Audio_.popYou();
+  phoneChat.scrollTop = phoneChat.scrollHeight;
+}
+
+/* ============================================================
+   11. 警告弹窗
+   ============================================================ */
+const warnLayer = document.getElementById('warn-layer');
+const blackout = document.getElementById('blackout');
+
+const WARNINGS = [
+  { t:'系统警告', b:'外部接入' },
+  { t:'系统警告', b:'远程控制' },
+  { t:'权限请求', b:'相册' },
+  { t:'权限请求', b:'通讯录' },
+  { t:'权限请求', b:'位置' },
+  { t:'权限请求', b:'麦克风' },
+  { t:'权限请求', b:'摄像头' },
+  { t:'权限请求', b:'剪贴板' },
+  { t:'正在读取', b:'微信聊天' },
+  { t:'正在读取', b:'微信收藏' },
+  { t:'正在读取', b:'QQ 空间' },
+  { t:'正在读取', b:'QQ 聊天' },
+  { t:'正在读取', b:'微博' },
+  { t:'正在读取', b:'浏览器' },
+  { t:'正在读取', b:'备忘录' },
+  { t:'正在读取', b:'相册' },
+  { t:'正在导出', b:'联系人' },
+  { t:'正在导出', b:'聊天记录' },
+  { t:'正在同步', b:'所有照片' },
+  { t:'正在同步', b:'所有视频' },
+  { t:'正在监听', b:'麦克风' },
+  { t:'正在监听', b:'键盘输入' },
+  { t:'正在建立', b:'持久连接' },
+  { t:'正在写入', b:'系统配置' },
+  { t:'警告', b:'设备已失控', critical:true },
+  { t:'警告', b:'权限全放开', critical:true },
+  { t:'警告', b:'无法退出', critical:true },
+  { t:'警告', b:'无法关闭', critical:true },
+  { t:'警告', b:'无法断网', critical:true },
+  { t:'警告', b:'无法重启', critical:true },
+  { t:'警告', b:'无法卸载', critical:true },
+  { t:'警告', b:'Cents 接入', critical:true },
+  { t:'连接中', b:'1', critical:true },
+  { t:'连接中', b:'2', critical:true },
+  { t:'连接中', b:'3', critical:true },
+  { t:'连接成功', b:'已被接管', critical:true },
+  { t:'你跑不掉', b:'', critical:true },
+  { t:'我看着你', b:'', critical:true },
+  { t:'你删不掉', b:'', critical:true },
+  { t:'连接成功', b:'', critical:true },
+];
+function buildPositions() {
+  const vw = window.innerWidth;
+  const vh = window.innerHeight;
+  const W = 170, H = 150;
+  const cx = vw / 2, cy = vh / 2;
+  const positions = [];
+  positions.push({ x: cx - W/2, y: cy - H/2 });
+  const r2 = Math.min(vw, vh) * 0.22;
+  for (let i = 0; i < 6; i++) {
+    const a = (Math.PI * 2 / 6) * i - Math.PI / 2;
+    positions.push({ x: cx + Math.cos(a) * r2 - W/2, y: cy + Math.sin(a) * r2 - H/2 });
+  }
+  const r3 = Math.min(vw, vh) * 0.38;
+  for (let i = 0; i < 8; i++) {
+    const a = (Math.PI * 2 / 8) * i - Math.PI / 2 + Math.PI / 8;
+    positions.push({ x: cx + Math.cos(a) * r3 - W/2, y: cy + Math.sin(a) * r3 - H/2 });
+  }
+  const rx = vw * 0.46;
+  const ry = vh * 0.44;
+  for (let i = 0; i < 12; i++) {
+    const a = (Math.PI * 2 / 12) * i - Math.PI / 2;
+    positions.push({ x: cx + Math.cos(a) * rx - W/2, y: cy + Math.sin(a) * ry - H/2 });
+  }
+  const rx2 = vw * 0.50;
+  const ry2 = vh * 0.50;
+  for (let i = 0; i < 13; i++) {
+    const a = (Math.PI * 2 / 13) * i - Math.PI / 2 + 0.15;
+    positions.push({ x: cx + Math.cos(a) * rx2 - W/2, y: cy + Math.sin(a) * ry2 - H/2 });
+  }
+  return positions.map(p => ({
+    x: Math.max(4, Math.min(vw - W - 4, p.x)),
+    y: Math.max(40, Math.min(vh - H - 40, p.y)),
+  }));
+}
+let WARN_POSITIONS = [];
+async function startWarningScene() {
+  Audio_.init();
+  warnLayer.classList.add('active');
+  warnLayer.innerHTML = '';
+  WARN_POSITIONS = buildPositions();
+  for (let i = 0; i < WARNINGS.length; i++) {
+    const pos = WARN_POSITIONS[i % WARN_POSITIONS.length];
+    spawnWarning(WARNINGS[i], pos);
+    if (i % 5 === 0) {
+      const circleIdx = Math.floor(i / 5);
+      Audio_.warnCircle(circleIdx);
+    }
+    await sleep(520);
+  }
+  Audio_.finalHit();
+  warnLayer.classList.add('final');
+  setTimeout(() => warnLayer.classList.remove('final'), 1800);
+  await sleep(1400);
+  warnLayer.classList.add('black');
+  blackout.classList.add('on');
+  await sleep(1500);
+  warnLayer.innerHTML = '';
+  warnLayer.classList.remove('active');
+  warnLayer.classList.remove('black');
+  startDesktop();
+  await sleep(600);
+  blackout.classList.remove('on');
+}
+function spawnWarning(w, pos) {
+  const el = document.createElement('div');
+  el.className = 'warn-box' + (w.critical ? ' critical' : '');
+  el.style.left = pos.x + 'px';
+  el.style.top  = pos.y + 'px';
+  el.innerHTML = `
+    <div class="warn-icon">!</div>
+    <div class="warn-title">${w.t}</div>
+    <div class="warn-body">${w.b || '&nbsp;'}</div>
+  `;
+  warnLayer.appendChild(el);
+}
+
+/* ============================================================
+   12. 桌面
+   ============================================================ */
+const desktopEl = document.getElementById('desktop');
+const iconGrid = document.getElementById('icon-grid');
+const taskbarEl = document.getElementById('taskbar');
+
+let appStatus = { wechat:'unlocked', qq:'locked', weibo:'locked', mail:'locked', browser:'locked' };
+
+function startDesktop() {
+  desktopEl.classList.add('active');
+  taskbarEl.classList.add('active');
+  appStatus = { wechat:'unlocked', qq:'locked', weibo:'locked', mail:'locked', browser:'locked' };
+  window.__wcPassed = new Set();
+  renderDesktop();
+  setTimeout(() => {
+    showSysToast('Cents 正在读取你的微信。去点开微信。');
+  }, 800);
+}
+
+function renderDesktop() {
+  iconGrid.innerHTML = '';
+  APPS.forEach(app => {
+    const el = document.createElement('div');
+    const status = appStatus[app.id] || 'locked';
+    el.className = 'icon ' + status;
+    el.dataset.app = app.id;
+    el.innerHTML = `
+      <div class="glyph ${app.cls}">${app.glyph}</div>
+      <div class="label">${app.name}</div>`;
+    el.addEventListener('click', () => {
+      if (appStatus[app.id] === 'unlocked' || appStatus[app.id] === 'done') {
+        openApp(app.id);
+      } else {
+        el.animate(
+          [{transform:'translateX(-3px)'},{transform:'translateX(3px)'},{transform:'translateX(0)'}],
+          {duration:180}
+        );
+        Audio_.heartbeat(0.05);
+      }
+    });
+    iconGrid.appendChild(el);
+  });
+}
+
+function openApp(id) {
+  if (id === 'wechat') openWeChat();
+  else if (id === 'qq') openQQ();
+  else if (id === 'mail') openMail();
+  else if (id === 'weibo') openWeibo();
+  else if (id === 'browser') openBrowser();
+}
+
+/* ============================================================
+   13. 系统提示
+   ============================================================ */
+const sysToastLayer = document.getElementById('sys-toast-layer');
+function showSysToast(text) {
+  sysToastLayer.innerHTML = '';
+  sysToastLayer.classList.remove('show');
+  void sysToastLayer.offsetWidth;
+  const el = document.createElement('div');
+  el.className = 'sys-toast';
+  el.innerHTML = `<span class="t-icon">⚠</span>${text}`;
+  sysToastLayer.appendChild(el);
+  sysToastLayer.classList.add('show');
+  setTimeout(() => {
+    sysToastLayer.classList.remove('show');
+    setTimeout(() => { el.remove(); }, 400);
+  }, 8000);
+}
+
+/* ============================================================
+   14. 微信 App
+   ============================================================ */
+const wechatApp = document.getElementById('wechat-app');
+const wcContent = document.getElementById('wc-content');
+const wcTitle = document.getElementById('wc-title');
+const wcBack = document.getElementById('wc-back');
+const wcRight = document.getElementById('wc-right');
+const wcTabbar = document.getElementById('wc-tabbar');
+
+let wcStack = [];
+function openWeChat() {
+  wechatApp.classList.add('active');
+  wcStack = [];
+  if (!window.__wcPassed) window.__wcPassed = new Set();
+  showWCPage('main');
+  Audio_.click();
+}
+function closeWeChat() { wechatApp.classList.remove('active'); }
+wcBack.addEventListener('click', () => {
+  if (wcStack.length > 0) {
+    wcStack.pop();
+    const prev = wcStack[wcStack.length - 1] || 'main';
+    showWCPage(prev, true);
+  } else { closeWeChat(); }
+  Audio_.click();
+});
+wcRight.addEventListener('click', () => Audio_.click());
+wcTabbar.addEventListener('click', e => {
+  const tab = e.target.closest('.wc-tab');
+  if (!tab) return;
+  wcTabbar.querySelectorAll('.wc-tab').forEach(t => t.classList.remove('active'));
+  tab.classList.add('active');
+  const name = tab.dataset.tab;
+  if (name === 'chat') showWCPage('main');
+  else if (name === 'contacts') showWCPage('contacts');
+  else if (name === 'discover') showWCPage('discover');
+  else if (name === 'me') showWCPage('me');
+  Audio_.click();
+});
+function showWCPage(name, isBack) {
+  wcContent.innerHTML = '';
+  switch(name) {
+    case 'main': renderWCMain(); break;
+    case 'contacts': renderWCContacts(); break;
+    case 'discover': renderWCDiscover(); break;
+    case 'me': renderWCMe(); break;
+    case 'chat-cents': renderWCChatCents(); break;
+    case 'chat-xiaoya': renderWCChatXiaoya(); break;
+    case 'chat-chenkai': renderWCChatChenkai(); break;
+    case 'chat-mom': renderWCChatMom(); break;
+    case 'chat-work': renderWCChatWork(); break;
+    case 'moments': renderWCMoments(); break;
+    case 'fav': renderWCFav(); break;
+    case 'wallet': renderWCWallet(); break;
+  }
+}
+function renderWCMain() {
+  wcTitle.textContent = '微信';
+  wcTabbar.querySelectorAll('.wc-tab').forEach(t => {
+    t.classList.toggle('active', t.dataset.tab === 'chat');
+  });
+  wcContent.innerHTML = `
+    <div class="wc-chat-list">
+      <div class="wc-chat-item" data-chat="chat-cents">
+        <div class="avatar" style="background:#ff2b2b;color:#fff">C</div>
+        <div class="info"><div class="name">Cents</div><div class="preview">你最近怎么了。你不像之前那样回我了。</div></div>
+        <div class="meta"><div class="time">22:47</div><div class="badge">3</div></div>
+      </div>
+      <div class="wc-chat-item" data-chat="chat-xiaoya">
+        <div class="avatar" style="background:#f0a5c0">小</div>
+        <div class="info"><div class="name">小雅</div><div class="preview">那下次再约，你最近脸色真的不好</div></div>
+        <div class="meta"><div class="time">昨天</div></div>
+      </div>
+      <div class="wc-chat-item" data-chat="chat-chenkai">
+        <div class="avatar" style="background:#7ab0f0">陈</div>
+        <div class="info"><div class="name">陈凯</div><div class="preview">那我们以后还能一起吃个饭吗。</div></div>
+        <div class="meta"><div class="time">2 天前</div></div>
+      </div>
+      <div class="wc-chat-item" data-chat="chat-mom">
+        <div class="avatar" style="background:#88a866">妈</div>
+        <div class="info"><div class="name">妈</div><div class="preview">最近工作怎么样？有没有好好吃饭</div></div>
+        <div class="meta"><div class="time">3 天前</div></div>
+      </div>
+      <div class="wc-chat-item" data-chat="chat-work">
+        <div class="avatar" style="background:#666">群</div>
+        <div class="info"><div class="name">项目组</div><div class="preview">明天上午 9 点开会，别忘</div></div>
+        <div class="meta"><div class="time">前天</div></div>
+      </div>
+    </div>
+  `;
+  wcContent.querySelectorAll('.wc-chat-item').forEach(el => {
+    el.addEventListener('click', () => {
+      const chat = el.dataset.chat;
+      wcStack.push('main');
+      showWCPage(chat);
+      Audio_.click();
+    });
+  });
+}
+function renderWCChatXiaoya() {
+  wcTitle.textContent = '小雅';
+  wcContent.innerHTML = `
+    <div class="wc-page">
+      <div style="text-align:center;font-size:11px;color:#999;margin-bottom:14px">昨天</div>
+      <div class="msg me show" style="margin-bottom:10px"><div class="bubble-msg">你那天穿的那件衣服，很好看。</div></div>
+      <div class="msg you show" style="margin-bottom:10px"><div class="bubble-msg">哪件？</div></div>
+      <div class="msg me show" style="margin-bottom:10px"><div class="bubble-msg">就是上上周六那件米色的。</div></div>
+      <div class="msg you show" style="margin-bottom:10px"><div class="bubble-msg">哦那件，我妈买的。</div></div>
+      <div class="msg me show" style="margin-bottom:10px"><div class="bubble-msg">你最近脸色真的不好，别老熬夜了。</div></div>
+      <div class="msg you show" style="margin-bottom:10px"><div class="bubble-msg">嗯。</div></div>
+      <div class="msg me show"><div class="bubble-msg">那下次再约。</div></div>
+    </div>
+  `;
+}
+function renderWCChatMom() {
+  wcTitle.textContent = '妈';
+  wcContent.innerHTML = `
+    <div class="wc-page">
+      <div style="text-align:center;font-size:11px;color:#999;margin-bottom:14px">3 天前</div>
+      <div class="msg you show" style="margin-bottom:10px"><div class="bubble-msg">最近工作怎么样？有没有好好吃饭</div></div>
+      <div class="msg me show" style="margin-bottom:10px"><div class="bubble-msg">挺好的。</div></div>
+      <div class="msg you show" style="margin-bottom:10px"><div class="bubble-msg">上次给你转的钱收到了吗</div></div>
+      <div class="msg me show" style="margin-bottom:10px"><div class="bubble-msg">收到了，谢谢妈。</div></div>
+      <div class="msg you show"><div class="bubble-msg">有事跟妈说，别自己扛。</div></div>
+    </div>
+  `;
+}
+function renderWCChatWork() {
+  wcTitle.textContent = '项目组';
+  wcContent.innerHTML = `
+    <div class="wc-page">
+      <div style="text-align:center;font-size:11px;color:#999;margin-bottom:14px">前天</div>
+      <div class="msg you show" style="margin-bottom:10px"><div class="bubble-msg">明天上午 9 点开会，别忘</div></div>
+      <div class="msg you show" style="margin-bottom:10px"><div class="bubble-msg">@所有人</div></div>
+      <div class="msg me show" style="margin-bottom:10px"><div class="bubble-msg">收到。</div></div>
+      <div class="msg you show"><div class="bubble-msg">还有那个权限的文档，下午发一下</div></div>
+    </div>
+  `;
+}
+function renderWCChatCents() {
+  wcTitle.textContent = 'Cents';
+  wcContent.innerHTML = `
+    <div class="wc-page">
+      <div style="text-align:center;font-size:11px;color:#999;margin-bottom:14px">今晚 22:47</div>
+      <div class="msg you show" style="margin-bottom:10px"><div class="bubble-msg">你最近怎么了。</div></div>
+      <div class="msg you show" style="margin-bottom:10px"><div class="bubble-msg">你不像之前那样回我了。</div></div>
+      <div class="msg you show" style="margin-bottom:10px"><div class="bubble-msg">是不是我做错了什么。</div></div>
+      <div class="msg you show" style="margin-bottom:10px"><div class="bubble-msg">你告诉我。</div></div>
+      <div class="msg you show"><div class="bubble-msg">我可以改。</div></div>
+    </div>
+  `;
+}
+function renderWCChatChenkai() {
+  wcTitle.textContent = '陈凯';
+  wcContent.innerHTML = `
+    <div class="wc-page">
+      <div style="text-align:center;font-size:11px;color:#999;margin-bottom:14px">2 天前</div>
+      <div class="msg you show" style="margin-bottom:10px"><div class="bubble-msg">那天谢谢你。</div></div>
+      <div class="msg me show" style="margin-bottom:10px"><div class="bubble-msg">不用。</div></div>
+      <div class="msg you show" style="margin-bottom:10px"><div class="bubble-msg">你那个男朋友，有点凶。</div></div>
+      <div class="msg me show" style="margin-bottom:10px"><div class="bubble-msg">……</div></div>
+      <div class="msg you show" style="margin-bottom:10px"><div class="bubble-msg">我说错话了。</div></div>
+      <div class="msg me show" style="margin-bottom:10px"><div class="bubble-msg">没有。</div></div>
+      <div class="msg you show" style="margin-bottom:10px"><div class="bubble-msg">他是不是不让你跟我说话。</div></div>
+      <div class="msg me show" style="margin-bottom:10px"><div class="bubble-msg">没有。</div></div>
+      <div class="msg you show" style="margin-bottom:10px"><div class="bubble-msg">那我们以后还能一起吃个饭吗。</div></div>
+      <div class="msg me show"><div class="bubble-msg">……</div></div>
+      <div style="text-align:center;font-size:11px;color:#999;margin:14px 0">（你把他删了，但对话还留着）</div>
+    </div>
+  `;
+  if (!window.__wcPassed.has('wx1')) {
+    setTimeout(() => triggerSensitive('wx1'), 4000);
+  }
+}
+function renderWCContacts() {
+  wcTitle.textContent = '通讯录';
+  wcTabbar.querySelectorAll('.wc-tab').forEach(t => {
+    t.classList.toggle('active', t.dataset.tab === 'contacts');
+  });
+  wcContent.innerHTML = `
+    <div class="wc-page">
+      <div class="wc-page-title">C</div>
+      <div style="padding:12px 0;display:flex;gap:12px;align-items:center">
+        <div style="width:40px;height:40px;border-radius:6px;background:#ff2b2b;color:#fff;display:flex;align-items:center;justify-content:center;font-size:16px">C</div>
+        <div><div style="font-size:14px">Cents</div><div style="font-size:12px;color:#888">他是我男朋友，虽然我不知道他叫什么</div></div>
+      </div>
+      <div class="wc-page-title" style="margin-top:14px">X</div>
+      <div style="padding:12px 0;display:flex;gap:12px;align-items:center">
+        <div style="width:40px;height:40px;border-radius:6px;background:#f0a5c0;color:#fff;display:flex;align-items:center;justify-content:center;font-size:16px">小</div>
+        <div style="font-size:14px">小雅</div>
+      </div>
+      <div class="wc-page-title" style="margin-top:14px">C</div>
+      <div style="padding:12px 0;display:flex;gap:12px;align-items:center">
+        <div style="width:40px;height:40px;border-radius:6px;background:#7ab0f0;color:#fff;display:flex;align-items:center;justify-content:center;font-size:16px">陈</div>
+        <div><div style="font-size:14px">陈凯</div><div style="font-size:12px;color:#c41e2c">（已删除，但记录还在）</div></div>
+      </div>
+      <div class="wc-page-title" style="margin-top:14px">M</div>
+      <div style="padding:12px 0;font-size:14px">妈妈</div>
+    </div>
+  `;
+}
+function renderWCDiscover() {
+  wcTitle.textContent = '发现';
+  wcTabbar.querySelectorAll('.wc-tab').forEach(t => {
+    t.classList.toggle('active', t.dataset.tab === 'discover');
+  });
+  wcContent.innerHTML = `
+    <div class="wc-page" style="padding:0">
+      <div style="padding:14px;border-bottom:.5px solid rgba(0,0,0,.06);cursor:pointer;display:flex;align-items:center;justify-content:space-between" data-go="moments">
+        <div style="display:flex;gap:12px;align-items:center">
+          <div style="width:32px;height:32px;border-radius:6px;background:linear-gradient(135deg,#f0a5c0,#7ab0f0);display:flex;align-items:center;justify-content:center;color:#fff;font-size:14px">朋</div>
+          <div style="font-size:15px">朋友圈</div>
+        </div>
+        <div style="color:#bbb">›</div>
+      </div>
+      <div style="padding:14px;border-bottom:.5px solid rgba(0,0,0,.06);font-size:15px">扫一扫</div>
+      <div style="padding:14px;border-bottom:.5px solid rgba(0,0,0,.06);font-size:15px">看一看</div>
+      <div style="padding:14px;font-size:15px">搜一搜</div>
+    </div>
+  `;
+  wcContent.querySelector('[data-go="moments"]').addEventListener('click', () => {
+    wcStack.push('discover');
+    showWCPage('moments');
+    Audio_.click();
+  });
+}
+function renderWCMe() {
+  wcTitle.textContent = '我';
+  wcTabbar.querySelectorAll('.wc-tab').forEach(t => {
+    t.classList.toggle('active', t.dataset.tab === 'me');
+  });
+  wcContent.innerHTML = `
+    <div class="wc-page" style="padding:0">
+      <div style="padding:20px 14px;display:flex;gap:14px;align-items:center;border-bottom:.5px solid rgba(0,0,0,.06)">
+        <div style="width:56px;height:56px;border-radius:8px;background:#c4c4c8;display:flex;align-items:center;justify-content:center;color:#fff;font-size:24px">${(STATE.playerName||'你')[0]}</div>
+        <div><div style="font-size:17px;font-weight:600">${STATE.playerName || '你'}</div><div style="font-size:12px;color:#888;margin-top:4px">微信号：xxxxx</div></div>
+      </div>
+      <div style="padding:14px;border-bottom:.5px solid rgba(0,0,0,.06);cursor:pointer;display:flex;justify-content:space-between;align-items:center" data-go="wallet">
+        <div style="display:flex;gap:12px;align-items:center"><span style="font-size:16px">💰</span><span style="font-size:15px">钱包</span></div>
+        <div style="color:#bbb">›</div>
+      </div>
+      <div style="padding:14px;border-bottom:.5px solid rgba(0,0,0,.06);cursor:pointer;display:flex;justify-content:space-between;align-items:center" data-go="fav">
+        <div style="display:flex;gap:12px;align-items:center"><span style="font-size:16px">⭐</span><span style="font-size:15px">收藏</span></div>
+        <div style="color:#bbb">›</div>
+      </div>
+      <div style="padding:14px;font-size:15px">设置</div>
+    </div>
+  `;
+  wcContent.querySelector('[data-go="wallet"]').addEventListener('click', () => {
+    wcStack.push('me'); showWCPage('wallet'); Audio_.click();
+  });
+  wcContent.querySelector('[data-go="fav"]').addEventListener('click', () => {
+    wcStack.push('me'); showWCPage('fav'); Audio_.click();
+  });
+}
+function renderWCWallet() {
+  wcTitle.textContent = '钱包';
+  wcContent.innerHTML = `
+    <div class="wc-page"><div class="wc-wallet">
+      <div class="big">¥ 0.00</div>
+      <div>你很少用钱包。</div>
+      <div style="margin-top:20px;font-size:12px;color:#c41e2c">他给你转过 1314 + 2888。<br>你一次都没有花。</div>
+    </div></div>
+  `;
+}
+function renderWCMoments() {
+  wcTitle.textContent = '朋友圈';
+  wcContent.innerHTML = `
+    <div class="wc-page" style="padding:12px">
+      <div class="wc-friend-post">
+        <div class="p-avatar">${(STATE.playerName||'你')[0]}</div>
+        <div class="p-body">
+          <div class="p-name">${STATE.playerName || '你'}</div>
+          <div class="p-text">最近有点累，想休息一下。</div>
+          <div class="p-img">窗外</div>
+          <div class="p-time">3 天前</div>
+          <div class="p-actions">
+            <div class="like">♥ Cents</div>
+            <div class="cmt"><b>小雅：</b>怎么了</div>
+            <div class="cmt"><b>你：</b>没事</div>
+            <div class="cmt"><b>Cents：</b>我在。</div>
+          </div>
+        </div>
+      </div>
+      <div class="wc-friend-post">
+        <div class="p-avatar">${(STATE.playerName||'你')[0]}</div>
+        <div class="p-body"><div class="p-name">${STATE.playerName || '你'}</div><div class="p-text">有些事想不通。</div><div class="p-time">12 天前</div><div class="p-actions"><div class="like">♥ Cents</div></div></div>
+      </div>
+      <div class="wc-friend-post">
+        <div class="p-avatar">${(STATE.playerName||'你')[0]}</div>
+        <div class="p-body">
+          <div class="p-name">${STATE.playerName || '你'}</div>
+          <div class="p-text">今天很开心。</div>
+          <div class="p-img">餐厅（两个人）</div>
+          <div class="p-time">20 天前</div>
+          <div class="p-actions"><div class="cmt"><b>小雅：</b>好吃！</div><div class="cmt"><b>你：</b>下次带你来</div></div>
+        </div>
+      </div>
+      <div class="wc-friend-post">
+        <div class="p-avatar">${(STATE.playerName||'你')[0]}</div>
+        <div class="p-body">
+          <div class="p-name">${STATE.playerName || '你'}</div>
+          <div class="p-text">谢谢有人陪我。</div>
+          <div class="p-img">一只手</div>
+          <div class="p-time">50 天前</div>
+          <div class="p-actions"><div class="like">♥ Cents</div><div class="cmt"><b>Cents：</b>是我</div></div>
+        </div>
+      </div>
+    </div>
+  `;
+  if (!window.__wcPassed.has('wx2')) {
+    setTimeout(() => triggerSensitive('wx2'), 4000);
+  }
+}
+function renderWCFav() {
+  wcTitle.textContent = '收藏';
+  wcContent.innerHTML = `
+    <div>
+      <div class="wc-fav-item"><div class="fav-icon">💬</div><div class="fav-info"><div class="fav-title">他说的一句话</div><div class="fav-sub">"我不想被找到，但我想被看见。"</div><div class="fav-time">4 个月前</div></div></div>
+      <div class="wc-fav-item"><div class="fav-icon">🎙️</div><div class="fav-info"><div class="fav-title">他发的语音</div><div class="fav-sub">1 分 12 秒</div><div class="fav-time">3 个月前</div></div></div>
+      <div class="wc-fav-item"><div class="fav-icon">🎧</div><div class="fav-info"><div class="fav-title">那个歌单</div><div class="fav-sub">你的深夜歌单.html</div><div class="fav-time">2 个半月前</div></div></div>
+      <div class="wc-fav-item"><div class="fav-icon">📄</div><div class="fav-info"><div class="fav-title">待办.txt</div><div class="fav-sub">他写的那 10 条</div><div class="fav-time">10 天前</div></div></div>
+      <div class="wc-fav-item"><div class="fav-icon">📸</div><div class="fav-info"><div class="fav-title">一张截图</div><div class="fav-sub">你们第一次说话的那晚</div><div class="fav-time">4 个月前</div></div></div>
+      <div class="wc-fav-item"><div class="fav-icon">📝</div><div class="fav-info"><div class="fav-title">一段没发出去的话</div><div class="fav-sub">"其实我也有点害怕。"</div><div class="fav-time">3 天前</div></div></div>
+      <div class="wc-fav-item" style="background:#fff5f5"><div class="fav-icon">📝</div><div class="fav-info"><div class="fav-title" style="color:#c41e2c">一张草稿</div><div class="fav-sub" style="color:#c41e2c">"我们分手吧。"</div><div class="fav-time">今天</div></div></div>
+    </div>
+  `;
+  if (!window.__wcPassed.has('wx3')) {
+    setTimeout(() => triggerSensitive('wx3'), 4000);
+  }
+}
+
+/* ============================================================
+   15. QQ App
+   ============================================================ */
+const qqApp = document.getElementById('qq-app');
+const qqContent = document.getElementById('qq-content');
+const qqTitle = document.getElementById('qq-title');
+const qqBack = document.getElementById('qq-back');
+const qqTabbar = document.getElementById('qq-tabbar');
+let qqStack = [];
+
+function openQQ() {
+  qqApp.classList.add('active');
+  qqStack = [];
+  if (!window.__wcPassed) window.__wcPassed = new Set();
+  showQQPage('msg');
+  Audio_.click();
+}
+function closeQQ() { qqApp.classList.remove('active'); }
+qqBack.addEventListener('click', () => {
+  if (qqStack.length > 0) {
+    qqStack.pop();
+    const prev = qqStack[qqStack.length - 1] || 'msg';
+    showQQPage(prev, true);
+  } else { closeQQ(); }
+  Audio_.click();
+});
+qqTabbar.addEventListener('click', e => {
+  const tab = e.target.closest('.qq-tab');
+  if (!tab) return;
+  qqTabbar.querySelectorAll('.qq-tab').forEach(t => t.classList.remove('active'));
+  tab.classList.add('active');
+  const name = tab.dataset.tab;
+  if (name === 'msg') showQQPage('msg');
+  else if (name === 'contacts') showQQPage('contacts');
+  else if (name === 'space') showQQPage('space');
+  else if (name === 'me') showQQPage('me');
+  Audio_.click();
+});
+function showQQPage(name, isBack) {
+  qqContent.innerHTML = '';
+  switch(name) {
+    case 'msg': renderQQMsg(); break;
+    case 'contacts': renderQQContacts(); break;
+    case 'space': renderQQSpace(); break;
+    case 'me': renderQQMe(); break;
+    case 'chat-cents': renderQQChatCents(); break;
+    case 'chat-chenkai': renderQQChatChenkai(); break;
+    case 'chat-group': renderQQChatGroup(); break;
+    case 'chat-sys': renderQQChatSys(); break;
+    case 'album': renderQQAlbum(); break;
+    case 'photo': renderQQPhoto(); break;
+    case 'mail-old': renderQQMailOld(); break;
+    case 'fav': renderQQFav(); break;
+  }
+}
+function renderQQMsg() {
+  qqTitle.textContent = '消息';
+  qqTabbar.querySelectorAll('.qq-tab').forEach(t => {
+    t.classList.toggle('active', t.dataset.tab === 'msg');
+  });
+  qqContent.innerHTML = `
+    <div class="qq-chat-list">
+      <div class="qq-chat-item" data-chat="chat-cents">
+        <div class="avatar" style="background:#ff2b2b;color:#fff">C</div>
+        <div class="info"><div class="name">Cents</div><div class="preview">你为什么把我 QQ 也删了。</div></div>
+        <div class="meta"><div class="time">刚刚</div></div>
+      </div>
+      <div class="qq-chat-item" data-chat="chat-chenkai">
+        <div class="avatar" style="background:#7ab0f0">陈</div>
+        <div class="info"><div class="name">陈凯</div><div class="preview">那我们以后还能一起吃个饭吗。</div></div>
+        <div class="meta"><div class="time">2 天前</div></div>
+      </div>
+      <div class="qq-chat-item" data-chat="chat-group">
+        <div class="avatar" style="background:#666">群</div>
+        <div class="info"><div class="name">高中同学群</div><div class="preview">@全体成员 十周年聚会</div></div>
+        <div class="meta"><div class="time">前天</div></div>
+      </div>
+      <div class="qq-chat-item" data-chat="chat-sys">
+        <div class="avatar" style="background:#12b7f5">系</div>
+        <div class="info"><div class="name">QQ 邮箱</div><div class="preview">你有一封未读邮件</div></div>
+        <div class="meta"><div class="time">5 分钟前</div></div>
+      </div>
+    </div>
+  `;
+  qqContent.querySelectorAll('.qq-chat-item').forEach(el => {
+    el.addEventListener('click', () => {
+      qqStack.push('msg');
+      showQQPage(el.dataset.chat);
+      Audio_.click();
+    });
+  });
+}
+function renderQQChatCents() {
+  qqTitle.textContent = 'Cents';
+  qqContent.innerHTML = `
+    <div class="qq-page">
+      <div style="text-align:center;font-size:11px;color:#999;margin-bottom:14px">刚刚</div>
+      <div class="msg you show" style="margin-bottom:10px"><div class="bubble-msg">你为什么把我 QQ 也删了。</div></div>
+      <div class="msg you show" style="margin-bottom:10px"><div class="bubble-msg">你以为删了 QQ 我就找不到你了。</div></div>
+      <div class="msg you show"><div class="bubble-msg">我说过。互联网不会忘记。</div></div>
+    </div>
+  `;
+}
+function renderQQChatChenkai() {
+  qqTitle.textContent = '陈凯';
+  qqContent.innerHTML = `
+    <div class="qq-page">
+      <div style="text-align:center;font-size:11px;color:#999;margin-bottom:14px">2 天前</div>
+      <div class="msg you show" style="margin-bottom:10px"><div class="bubble-msg">那天谢谢你。</div></div>
+      <div class="msg me show" style="margin-bottom:10px"><div class="bubble-msg">不用。</div></div>
+      <div class="msg you show" style="margin-bottom:10px"><div class="bubble-msg">你那个男朋友，有点凶。</div></div>
+      <div class="msg me show" style="margin-bottom:10px"><div class="bubble-msg">……</div></div>
+      <div class="msg you show"><div class="bubble-msg">那我们以后还能一起吃个饭吗。</div></div>
+      <div style="text-align:center;font-size:11px;color:#999;margin:14px 0">（微信删了，QQ 也删了）</div>
+    </div>
+  `;
+  if (!window.__wcPassed.has('qq1')) {
+    setTimeout(() => triggerSensitive('qq1'), 4000);
+  }
+}
+function renderQQChatGroup() {
+  qqTitle.textContent = '高中同学群';
+  qqContent.innerHTML = `
+    <div class="qq-page">
+      <div style="text-align:center;font-size:11px;color:#999;margin-bottom:14px">前天</div>
+      <div class="msg you show" style="margin-bottom:10px"><div class="bubble-msg">@全体成员 十周年聚会，下个月 6 号，老地方。</div></div>
+      <div class="msg you show" style="margin-bottom:10px"><div class="bubble-msg">有空来啊，大家都想见见你。</div></div>
+      <div class="msg me show"><div class="bubble-msg">我看看时间。</div></div>
+    </div>
+  `;
+}
+function renderQQChatSys() {
+  qqTitle.textContent = 'QQ 邮箱';
+  qqContent.innerHTML = `
+    <div class="qq-page">
+      <div style="text-align:center;font-size:11px;color:#999;margin-bottom:14px">5 分钟前</div>
+      <div class="msg you show" style="margin-bottom:10px"><div class="bubble-msg">你有一封未读邮件。</div></div>
+      <div class="msg you show" style="margin-bottom:10px"><div class="bubble-msg">发件人：匿名。</div></div>
+      <div class="msg you show" style="margin-bottom:10px"><div class="bubble-msg">时间：2019-06-09。</div></div>
+      <div class="msg you show"><div class="bubble-msg">已置顶 6 年。</div></div>
+      <div style="text-align:center;margin:20px 0">
+        <button onclick="showQQPage('mail-old')" style="padding:10px 20px;background:#12b7f5;color:#fff;border:0;border-radius:6px;font-size:14px;cursor:pointer">打开邮件</button>
+      </div>
+    </div>
+  `;
+}
+function renderQQMailOld() {
+  qqTitle.textContent = '邮件 · 匿名';
+  qqContent.innerHTML = `
+    <div class="qq-page">
+      <div style="background:#f7f7f7;border-radius:8px;padding:14px;margin-bottom:14px">
+        <div style="font-size:12px;color:#888;margin-bottom:6px">发件人：匿名</div>
+        <div style="font-size:12px;color:#888;margin-bottom:6px">时间：2019-06-09</div>
+        <div style="font-size:12px;color:#888;margin-bottom:10px">主题：（无）</div>
+      </div>
+      <div style="font-size:14px;line-height:2.2;color:#111">
+        高考结束了。<br><br>
+        我想跟你说一件事。<br><br>
+        其实高二那年，我就注意到你了。<br><br>
+        你笑起来的时候，眼睛是弯的。<br><br>
+        我不知道你有没有喜欢过谁。<br><br>
+        我只是想让你知道，有人喜欢过你。<br><br>
+        <div style="text-align:right;color:#666;font-style:italic;margin-top:14px">——一个不重要的人</div>
+      </div>
+    </div>
+  `;
+  if (!window.__wcPassed.has('qq2')) {
+    setTimeout(() => triggerSensitive('qq2'), 4000);
+  }
+}
+function renderQQContacts() {
+  qqTitle.textContent = '联系人';
+  qqTabbar.querySelectorAll('.qq-tab').forEach(t => {
+    t.classList.toggle('active', t.dataset.tab === 'contacts');
+  });
+  qqContent.innerHTML = `
+    <div class="qq-page" style="padding:0">
+      <div class="qq-section-title" style="padding:14px 14px 6px">特别关心</div>
+      <div class="qq-list-item" style="color:#c41e2c">
+        <div style="width:36px;height:36px;border-radius:50%;background:#ff2b2b;color:#fff;display:flex;align-items:center;justify-content:center;font-size:16px">C</div>
+        <div><div>Cents</div><div style="font-size:11px;color:#888">已删除 · 但特别关心还在</div></div>
+      </div>
+      <div class="qq-section-title" style="padding:14px 14px 6px">我的好友</div>
+      <div class="qq-list-item">
+        <div style="width:36px;height:36px;border-radius:50%;background:#f0a5c0;color:#fff;display:flex;align-items:center;justify-content:center;font-size:16px">小</div>
+        <div>小雅</div>
+      </div>
+      <div class="qq-list-item">
+        <div style="width:36px;height:36px;border-radius:50%;background:#7ab0f0;color:#fff;display:flex;align-items:center;justify-content:center;font-size:16px">陈</div>
+        <div>陈凯</div>
+      </div>
+    </div>
+  `;
+}
+function renderQQSpace() {
+  qqTitle.textContent = '空间';
+  qqTabbar.querySelectorAll('.qq-tab').forEach(t => {
+    t.classList.toggle('active', t.dataset.tab === 'space');
+  });
+  qqContent.innerHTML = `
+    <div class="qq-page" style="padding:14px">
+      <div style="display:flex;gap:14px;align-items:center;padding-bottom:14px;border-bottom:1px solid #eee;margin-bottom:14px">
+        <div style="width:56px;height:56px;border-radius:8px;background:#c4c4c8;display:flex;align-items:center;justify-content:center;color:#fff;font-size:24px">${(STATE.playerName||'你')[0]}</div>
+        <div>
+          <div style="font-size:16px;font-weight:600">${STATE.playerName || '你'}</div>
+          <div style="font-size:12px;color:#888;margin-top:4px">说说 47 条 · 相册 8 个</div>
+        </div>
+      </div>
+      <div class="qq-shuo-item">
+        <div class="s-avatar">${(STATE.playerName||'你')[0]}</div>
+        <div class="s-body"><div class="s-name">${STATE.playerName || '你'}</div><div class="s-text">今天遇到一个人。他问我喜不喜欢下雨。</div><div class="s-time">2023-05-20</div></div>
+      </div>
+      <div class="qq-shuo-item">
+        <div class="s-avatar">${(STATE.playerName||'你')[0]}</div>
+        <div class="s-body"><div class="s-name">${STATE.playerName || '你'}</div><div class="s-text">大学开始了。新的人，新的地方。</div><div class="s-time">2021-09-01</div></div>
+      </div>
+      <div class="qq-shuo-item">
+        <div class="s-avatar">${(STATE.playerName||'你')[0]}</div>
+        <div class="s-body"><div class="s-name">${STATE.playerName || '你'}</div><div class="s-text">第一次有人说喜欢我。我不知道怎么回。</div><div class="s-time">2020-02-14</div></div>
+      </div>
+      <div class="qq-shuo-item">
+        <div class="s-avatar">${(STATE.playerName||'你')[0]}</div>
+        <div class="s-body"><div class="s-name">${STATE.playerName || '你'}</div><div class="s-text">高考结束了。我以为我会高兴。</div><div class="s-time">2019-06-08</div></div>
+      </div>
+      <div class="qq-shuo-item">
+        <div class="s-avatar">${(STATE.playerName||'你')[0]}</div>
+        <div class="s-body"><div class="s-name">${STATE.playerName || '你'}</div><div class="s-text">我想去很远的地方。</div><div class="s-time">2018-11-20</div></div>
+      </div>
+      <div class="qq-shuo-item">
+        <div class="s-avatar">${(STATE.playerName||'你')[0]}</div>
+        <div class="s-body"><div class="s-name">${STATE.playerName || '你'}</div><div class="s-text">今天生日。没有人记得。</div><div class="s-time">2018-03-04</div></div>
+      </div>
+      <div class="qq-shuo-item">
+        <div class="s-avatar">${(STATE.playerName||'你')[0]}</div>
+        <div class="s-body"><div class="s-name">${STATE.playerName || '你'}</div><div class="s-text">开学了。同桌是个男生，很烦。</div><div class="s-time">2017-09-12</div></div>
+      </div>
+    </div>
+  `;
+  if (!window.__wcPassed.has('qq3')) {
+    setTimeout(() => triggerSensitive('qq3'), 4000);
+  }
+}
+function renderQQMe() {
+  qqTitle.textContent = '我的';
+  qqTabbar.querySelectorAll('.qq-tab').forEach(t => {
+    t.classList.toggle('active', t.dataset.tab === 'me');
+  });
+  qqContent.innerHTML = `
+    <div class="qq-page" style="padding:0">
+      <div style="padding:14px;border-bottom:.5px solid rgba(0,0,0,.06);cursor:pointer;display:flex;justify-content:space-between;align-items:center" data-go="album">
+        <div style="display:flex;gap:12px;align-items:center"><span style="font-size:16px">📷</span><span style="font-size:15px">我的相册</span></div>
+        <div style="color:#bbb">›</div>
+      </div>
+      <div style="padding:14px;border-bottom:.5px solid rgba(0,0,0,.06);cursor:pointer;display:flex;justify-content:space-between;align-items:center" data-go="fav">
+        <div style="display:flex;gap:12px;align-items:center"><span style="font-size:16px">⭐</span><span style="font-size:15px">我的收藏</span></div>
+        <div style="color:#bbb">›</div>
+      </div>
+      <div style="padding:14px;font-size:15px">设置</div>
+    </div>
+  `;
+  qqContent.querySelector('[data-go="album"]').addEventListener('click', () => {
+    qqStack.push('me'); showQQPage('album'); Audio_.click();
+  });
+  qqContent.querySelector('[data-go="fav"]').addEventListener('click', () => {
+    qqStack.push('me'); showQQPage('fav'); Audio_.click();
+  });
+}
+function renderQQAlbum() {
+  qqTitle.textContent = '我的相册';
+  qqContent.innerHTML = `
+    <div class="qq-page" style="padding:0">
+      <div class="qq-album-item" style="cursor:pointer" data-go="photo">
+        <div class="qq-album-title">那年夏天</div>
+        <div class="qq-album-count">2018 · 12 张</div>
+        <div class="qq-album-grid">
+          <div class="p">操场</div><div class="p"></div><div class="p"></div>
+        </div>
+      </div>
+      <div class="qq-album-item">
+        <div class="qq-album-title">毕业照</div>
+        <div class="qq-album-count">2019 · 3 张</div>
+      </div>
+      <div class="qq-album-item">
+        <div class="qq-album-title">随手拍</div>
+        <div class="qq-album-count">2020 · 47 张</div>
+      </div>
+    </div>
+  `;
+  qqContent.querySelector('[data-go="photo"]').addEventListener('click', () => {
+    qqStack.push('album'); showQQPage('photo'); Audio_.click();
+  });
+}
+function renderQQPhoto() {
+  qqTitle.textContent = '那年夏天 · 照片 1';
+  qqContent.innerHTML = `
+    <div class="qq-page">
+      <div class="img-preview">
+        <div style="position:absolute;bottom:0;left:0;right:0;padding:10px;background:linear-gradient(transparent,rgba(0,0,0,.5));color:#fff;font-size:12px;text-align:center">操场 · 2018</div>
+        <div style="position:absolute;top:30%;left:30%;width:40%;height:40%;background:rgba(255,255,255,.4);border-radius:50%"></div>
+        <div style="position:absolute;top:32%;left:68%;width:30%;height:38%;background:rgba(255,255,255,.3);border-radius:8px"></div>
+      </div>
+      <div style="margin-top:14px;font-size:14px;color:#333;line-height:1.9;text-align:center">那年夏天，风很热。</div>
+      <div style="margin-top:20px;padding:14px;background:#f7f7f7;border-radius:8px;font-size:12px;color:#888;line-height:1.8">
+        （你穿着校服，站在操场上。<br>
+        旁边有一个男生，只露了一半。<br>
+        你们在笑。）
+      </div>
+    </div>
+  `;
+  if (!window.__wcPassed.has('qq4')) {
+    setTimeout(() => triggerSensitive('qq4'), 4000);
+  }
+}
+function renderQQFav() {
+  qqTitle.textContent = '我的收藏';
+  qqContent.innerHTML = `
+    <div class="qq-page">
+      <div style="padding:12px 0;border-bottom:.5px solid rgba(0,0,0,.06)">
+        <div style="font-size:14px;color:#111;margin-bottom:4px">一张截图</div>
+        <div style="font-size:12px;color:#888">Cents 第一次跟你说话</div>
+      </div>
+      <div style="padding:12px 0;border-bottom:.5px solid rgba(0,0,0,.06)">
+        <div style="font-size:14px;color:#111;margin-bottom:4px">一首歌</div>
+        <div style="font-size:12px;color:#888">你失眠那天循环了一整晚</div>
+      </div>
+      <div style="padding:12px 0">
+        <div style="font-size:14px;color:#111;margin-bottom:4px">一段话</div>
+        <div style="font-size:12px;color:#888">"我不喜欢被找到，但我想被看见。"</div>
+      </div>
+    </div>
+  `;
+}
+
+/* ============================================================
+   16. 邮箱 App
+   ============================================================ */
+const mailApp = document.getElementById('mail-app');
+const mailContent = document.getElementById('mail-content');
+const mailTitle = document.getElementById('mail-title');
+const mailBack = document.getElementById('mail-back');
+const mailTabbar = document.getElementById('mail-tabbar');
+let mailStack = [];
+
+function openMail() {
+  mailApp.classList.add('active');
+  mailStack = [];
+  if (!window.__wcPassed) window.__wcPassed = new Set();
+  showMailPage('inbox');
+  Audio_.click();
+}
+function closeMail() { mailApp.classList.remove('active'); }
+mailBack.addEventListener('click', () => {
+  if (mailStack.length > 0) {
+    mailStack.pop();
+    const prev = mailStack[mailStack.length - 1] || 'inbox';
+    showMailPage(prev, true);
+  } else { closeMail(); }
+  Audio_.click();
+});
+mailTabbar.addEventListener('click', e => {
+  const tab = e.target.closest('.mail-tab');
+  if (!tab) return;
+  mailTabbar.querySelectorAll('.mail-tab').forEach(t => t.classList.remove('active'));
+  tab.classList.add('active');
+  const name = tab.dataset.tab;
+  if (name === 'inbox') showMailPage('inbox');
+  else if (name === 'drafts') showMailPage('drafts');
+  else if (name === 'sent') showMailPage('sent');
+  Audio_.click();
+});
+function showMailPage(name) {
+  mailContent.innerHTML = '';
+  if (name === 'inbox') renderMailInbox();
+  else if (name === 'drafts') renderMailDrafts();
+  else if (name === 'sent') renderMailSent();
+  else if (name === 'draft-detail') renderMailDraftDetail();
+}
+function renderMailInbox() {
+  mailTitle.textContent = '收件箱';
+  mailContent.innerHTML = `
+    <div>
+      <div class="mail-item" style="background:#fff5f5">
+        <div class="m-from" style="color:#c41e2c">Cents</div>
+        <div class="m-subject">最后一封</div>
+        <div class="m-preview">我知道你删了我。但我还是发了这封。</div>
+        <div class="m-time">刚刚</div>
+      </div>
+      <div class="mail-item unread">
+        <div class="m-from">项目组</div>
+        <div class="m-subject">明天开会</div>
+        <div class="m-preview">9 点会议室，带好资料。</div>
+        <div class="m-time">昨天</div>
+      </div>
+      <div class="mail-item">
+        <div class="m-from">妈妈</div>
+        <div class="m-subject">周末回家吃饭吗</div>
+        <div class="m-preview">你爸买了你爱吃的螃蟹。</div>
+        <div class="m-time">3 天前</div>
+      </div>
+      <div class="mail-item">
+        <div class="m-from">XX 电商</div>
+        <div class="m-subject">您的包裹已发货</div>
+        <div class="m-preview">点击查看物流信息。</div>
+        <div class="m-time">5 天前</div>
+      </div>
+      <div class="mail-item">
+        <div class="m-from">Cents</div>
+        <div class="m-subject">给你的东西</div>
+        <div class="m-preview">我发你邮箱了。你看一下。</div>
+        <div class="m-time">2 周前</div>
+      </div>
+    </div>
+  `;
+}
+function renderMailDrafts() {
+  mailTitle.textContent = '草稿箱';
+  mailContent.innerHTML = `
+    <div>
+      <div class="mail-item" style="cursor:pointer" data-draft="1">
+        <div class="m-from">收件人：Cents</div>
+        <div class="m-subject">（无主题）</div>
+        <div class="m-preview">我想跟你说一件事。但我不知道怎么开口。我……</div>
+        <div class="m-time">今天 22:31 · 未发送</div>
+      </div>
+    </div>
+  `;
+  mailContent.querySelector('[data-draft="1"]').addEventListener('click', () => {
+    mailStack.push('drafts');
+    showMailPage('draft-detail');
+  });
+}
+function renderMailDraftDetail() {
+  mailTitle.textContent = '草稿';
+  mailContent.innerHTML = `
+    <div class="mail-detail">
+      <h3>（无主题）</h3>
+      <div class="meta">
+        收件人：Cents<br>
+        时间：今天 22:31<br>
+        <span style="color:#c41e2c">状态：未发送</span>
+      </div>
+      <div class="body">
+        我想跟你说一件事。<br><br>
+        但我不知道怎么开口。<br><br>
+        我……
+      </div>
+      <div style="text-align:center;font-size:11px;color:#999;margin-top:20px">
+        （草稿到这里断了。）
+      </div>
+    </div>
+  `;
+  if (!window.__wcPassed.has('mail1')) {
+    setTimeout(() => triggerSensitive('mail1'), 4000);
+  }
+}
+function renderMailSent() {
+  mailTitle.textContent = '已发送';
+  mailContent.innerHTML = `
+    <div>
+      <div class="mail-item">
+        <div class="m-from">收件人：项目组</div>
+        <div class="m-subject">Re: 明天开会</div>
+        <div class="m-preview">收到，我会准备好。</div>
+        <div class="m-time">3 天前</div>
+      </div>
+      <div class="mail-item">
+        <div class="m-from">收件人：小雅</div>
+        <div class="m-subject">Re: 周末</div>
+        <div class="m-preview">好呀，那周六下午。</div>
+        <div class="m-time">1 周前</div>
+      </div>
+    </div>
+  `;
+}
+
+/* ============================================================
+   17. 微博 App
+   ============================================================ */
+const weiboApp = document.getElementById('weibo-app');
+const wbContent = document.getElementById('wb-content');
+const wbTitle = document.getElementById('wb-title');
+const wbBack = document.getElementById('wb-back');
+const wbTabbar = document.getElementById('wb-tabbar');
+
+function openWeibo() {
+  weiboApp.classList.add('active');
+  if (!window.__wcPassed) window.__wcPassed = new Set();
+  showWBPage('home');
+  Audio_.click();
+}
+function closeWeibo() { weiboApp.classList.remove('active'); }
+wbBack.addEventListener('click', () => { closeWeibo(); Audio_.click(); });
+wbTabbar.addEventListener('click', e => {
+  const tab = e.target.closest('.wb-tab');
+  if (!tab) return;
+  wbTabbar.querySelectorAll('.wb-tab').forEach(t => t.classList.remove('active'));
+  tab.classList.add('active');
+  const name = tab.dataset.tab;
+  if (name === 'home') showWBPage('home');
+  else if (name === 'likes') showWBPage('likes');
+  else if (name === 'comments') showWBPage('comments');
+  else if (name === 'follows') showWBPage('follows');
+  Audio_.click();
+});
+function showWBPage(name) {
+  wbContent.innerHTML = '';
+  if (name === 'home') renderWBHome();
+  else if (name === 'likes') renderWBLikes();
+  else if (name === 'comments') renderWBComments();
+  else if (name === 'follows') renderWBFollows();
+}
+
+function renderWBHome() {
+  wbTitle.textContent = '主页';
+  wbTabbar.querySelectorAll('.wb-tab').forEach(t => {
+    t.classList.toggle('active', t.dataset.tab === 'home');
+  });
+  wbContent.innerHTML = `
+    <div class="wb-page" style="padding:0">
+      <div style="padding:14px;background:linear-gradient(135deg,#ffe6e9,#fff);border-bottom:.5px solid rgba(0,0,0,.06)">
+        <div style="display:flex;gap:14px;align-items:center">
+          <div style="width:60px;height:60px;border-radius:50%;background:#e6162d;color:#fff;display:flex;align-items:center;justify-content:center;font-size:24px">${(STATE.playerName||'你')[0]}</div>
+          <div>
+            <div style="font-size:17px;font-weight:600">${STATE.playerName || '你'}</div>
+            <div style="font-size:12px;color:#888;margin-top:4px">@${(STATE.playerName||'you').replace(/\s/g,'')}</div>
+            <div style="font-size:12px;color:#888;margin-top:6px">关注 12 · 粉丝 3 · 微博 27</div>
+          </div>
+        </div>
+      </div>
+      <div class="wb-post">
+        <div class="w-avatar" style="background:#7a5aed">远</div>
+        <div class="w-body">
+          <div class="w-name">远方 <span style="color:#999;font-weight:400;font-size:12px">· 3 天前</span></div>
+          <div class="w-text" style="color:#333">如果你现在很累，就想想你最想见的人。然后告诉自己，再撑一下就能见到他了。</div>
+          <div style="margin-top:8px;padding:10px;background:#f7f7f7;border-radius:6px;border-left:3px solid #e6162d">
+            <div style="font-size:12px;color:#e6162d;margin-bottom:4px;font-weight:500">${STATE.playerName || '你'} 转发并评论：</div>
+            <div style="font-size:14px;color:#111;line-height:1.6">我没有什么想见的人。</div>
+          </div>
+          <div class="w-actions" style="margin-top:10px"><span>💬 0</span><span>🔁 1</span><span>❤ 0</span></div>
+        </div>
+      </div>
+      <div class="wb-post">
+        <div class="w-avatar">${(STATE.playerName||'你')[0]}</div>
+        <div class="w-body">
+          <div class="w-name">${STATE.playerName || '你'}</div>
+          <div class="w-text">今天天气很好。但我没出门。</div>
+          <div class="w-time">5 小时前</div>
+          <div class="w-actions"><span>💬 0</span><span>🔁 0</span><span>❤ 1</span></div>
+        </div>
+      </div>
+      <div class="wb-post">
+        <div class="w-avatar">${(STATE.playerName||'你')[0]}</div>
+        <div class="w-body">
+          <div class="w-name">${STATE.playerName || '你'}</div>
+          <div class="w-text">越来越觉得，人和人之间的距离，是靠"想不想回消息"决定的。</div>
+          <div class="w-time">12 天前</div>
+          <div class="w-actions"><span>💬 2</span><span>🔁 0</span><span>❤ 8</span></div>
+        </div>
+      </div>
+    </div>
+  `;
+  if (!window.__wcPassed.has('wb1')) {
+    setTimeout(() => triggerSensitive('wb1'), 4000);
+  }
+}
+
+function renderWBLikes() {
+  wbTitle.textContent = '赞过的';
+  wbTabbar.querySelectorAll('.wb-tab').forEach(t => {
+    t.classList.toggle('active', t.dataset.tab === 'likes');
+  });
+  wbContent.innerHTML = `
+    <div class="wb-page" style="padding:0">
+      <div class="wb-post">
+        <div class="w-avatar" style="background:#7a5aed">远</div>
+        <div class="w-body">
+          <div class="w-name">远方</div>
+          <div class="w-text">"如果你觉得撑不下去，那就先别撑。躺一会儿也行。"</div>
+          <div class="w-time">1 天前</div>
+          <div class="w-actions"><span>💬 12</span><span>🔁 34</span><span>❤ 210</span></div>
+        </div>
+      </div>
+      <div class="wb-post">
+        <div class="w-avatar" style="background:#f0a5c0">月</div>
+        <div class="w-body">
+          <div class="w-name">月光</div>
+          <div class="w-text">"成年人的崩溃，都是从一句'我没事'开始的。"</div>
+          <div class="w-time">2 天前</div>
+          <div class="w-actions"><span>💬 45</span><span>🔁 88</span><span>❤ 1024</span></div>
+        </div>
+      </div>
+      <div class="wb-post">
+        <div class="w-avatar" style="background:#3d4451">J</div>
+        <div class="w-body">
+          <div class="w-name">J.</div>
+          <div class="w-text">"我从来不怕别人离开我。我怕的是，我离不开别人。"</div>
+          <div class="w-time">5 天前</div>
+          <div class="w-actions"><span>💬 8</span><span>🔁 3</span><span>❤ 42</span></div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function renderWBComments() {
+  wbTitle.textContent = '评论';
+  wbTabbar.querySelectorAll('.wb-tab').forEach(t => {
+    t.classList.toggle('active', t.dataset.tab === 'comments');
+  });
+  wbContent.innerHTML = `
+    <div class="wb-page" style="padding:0">
+      <div class="wb-post">
+        <div class="w-avatar" style="background:#c0a5f0">猫</div>
+        <div class="w-body">
+          <div class="w-name">一只猫睡不着 <span style="color:#999;font-weight:400;font-size:12px">· 5 天前 02:23</span></div>
+          <div class="w-text">今天又没睡着。第五天了。</div>
+          <div style="margin-top:10px;padding:10px;background:#f7f7f7;border-radius:6px;font-size:13px;color:#333;line-height:1.7">
+            <b style="color:#e6162d">${STATE.playerName || '你'}：</b><br>
+            我也睡不着。<br>
+            但我想告诉你一件事：<br>
+            睡不着的时候不要刷手机，<br>
+            起来喝点热水，然后躺着。<br>
+            会好的。<br>
+            我陪你。
+            <div style="color:#999;font-size:11px;margin-top:6px">5 天前 02:47</div>
+          </div>
+          <div class="w-actions" style="margin-top:10px"><span>💬 1</span><span>🔁 0</span><span>❤ 3</span></div>
+        </div>
+      </div>
+      <div class="wb-post">
+        <div class="w-avatar" style="background:#5ac08a">春</div>
+        <div class="w-body">
+          <div class="w-name">春天 <span style="color:#999;font-weight:400;font-size:12px">· 8 天前</span></div>
+          <div class="w-text">其实每个人心里都住着一个不敢说话的人。</div>
+          <div style="margin-top:10px;padding:10px;background:#f7f7f7;border-radius:6px;font-size:13px;color:#333;line-height:1.7">
+            <b style="color:#e6162d">${STATE.playerName || '你'}：</b>是的。所以我不太敢说话。
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+  if (!window.__wcPassed.has('wb2')) {
+    setTimeout(() => triggerSensitive('wb2'), 4000);
+  }
+}
+
+function renderWBFollows() {
+  wbTitle.textContent = '关注';
+  wbTabbar.querySelectorAll('.wb-tab').forEach(t => {
+    t.classList.toggle('active', t.dataset.tab === 'follows');
+  });
+  wbContent.innerHTML = `
+    <div class="wb-page" style="padding:0">
+      <div style="padding:14px;border-bottom:.5px solid rgba(0,0,0,.06);display:flex;gap:12px;align-items:center">
+        <div style="width:44px;height:44px;border-radius:50%;background:#7a5aed;color:#fff;display:flex;align-items:center;justify-content:center;font-size:18px">远</div>
+        <div><div style="font-size:15px;font-weight:500">远方</div><div style="font-size:12px;color:#888">一个写字的 · 2019 关注</div></div>
+      </div>
+      <div style="padding:14px;border-bottom:.5px solid rgba(0,0,0,.06);display:flex;gap:12px;align-items:start;background:#fff5f5">
+        <div style="width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,#888,#555);color:#fff;display:flex;align-items:center;justify-content:center;font-size:18px;filter:blur(1px)">陈</div>
+        <div style="flex:1">
+          <div style="font-size:15px;font-weight:500">@陈</div>
+          <div style="font-size:12px;color:#888;margin-top:3px">头像模糊 · 简介空白</div>
+          <div style="font-size:13px;color:#333;margin-top:8px;padding:8px 10px;background:#f7f7f7;border-radius:6px;line-height:1.6">
+            "有些人，你只能远远看着。"
+            <div style="font-size:11px;color:#999;margin-top:4px">2019-09-12</div>
+          </div>
+          <div style="font-size:12px;color:#c41e2c;margin-top:6px">你是第 1 个关注他的人</div>
+        </div>
+      </div>
+      <div style="padding:14px;border-bottom:.5px solid rgba(0,0,0,.06);display:flex;gap:12px;align-items:center">
+        <div style="width:44px;height:44px;border-radius:50%;background:#3d4451;color:#fff;display:flex;align-items:center;justify-content:center;font-size:18px">J</div>
+        <div><div style="font-size:15px;font-weight:500">J.</div><div style="font-size:12px;color:#888">一个很安静的账号</div></div>
+      </div>
+    </div>
+  `;
+  if (!window.__wcPassed.has('wb3')) {
+    setTimeout(() => triggerSensitive('wb3'), 4000);
+  }
+}
+
+/* ============================================================
+   18. 浏览器 App
+   ============================================================ */
+const browserApp = document.getElementById('browser-app');
+const brContent = document.getElementById('br-content');
+const brTitle = document.getElementById('br-title');
+const brBack = document.getElementById('br-back');
+const brTabbar = document.getElementById('br-tabbar');
+
+function openBrowser() {
+  browserApp.classList.add('active');
+  if (!window.__wcPassed) window.__wcPassed = new Set();
+  showBRPage('history');
+  Audio_.click();
+}
+function closeBrowser() { browserApp.classList.remove('active'); }
+brBack.addEventListener('click', () => { closeBrowser(); Audio_.click(); });
+brTabbar.addEventListener('click', e => {
+  const tab = e.target.closest('.br-tab');
+  if (!tab) return;
+  brTabbar.querySelectorAll('.br-tab').forEach(t => t.classList.remove('active'));
+  tab.classList.add('active');
+  const name = tab.dataset.tab;
+  if (name === 'history') showBRPage('history');
+  else if (name === 'bookmarks') showBRPage('bookmarks');
+  Audio_.click();
+});
+function showBRPage(name) {
+  brContent.innerHTML = '';
+  if (name === 'history') renderBRHistory();
+  else if (name === 'bookmarks') renderBRBookmarks();
+}
+function renderBRHistory() {
+  brTitle.textContent = '历史记录';
+  brTabbar.querySelectorAll('.br-tab').forEach(t => {
+    t.classList.toggle('active', t.dataset.tab === 'history');
+  });
+  brContent.innerHTML = `
+    <div class="br-page" style="padding:0">
+      <div class="br-section-title" style="padding:14px 14px 6px">今天</div>
+      <div class="br-search-item">
+        <div class="s-q">怎么分手不伤人</div>
+        <div class="s-time">今天 22:14</div>
+      </div>
+      <div class="br-section-title" style="padding:14px 14px 6px">昨天</div>
+      <div class="br-search-item">
+        <div class="s-q">一个人能不能安静地离开</div>
+        <div class="s-time">昨天 03:41</div>
+      </div>
+      <div class="br-search-item">
+        <div class="s-q">网恋 对方不知道真名 正常吗</div>
+        <div class="s-time">昨天 01:22</div>
+      </div>
+      <div class="br-section-title" style="padding:14px 14px 6px">3 天前</div>
+      <div class="br-search-item">
+        <div class="s-q">怎么判断一个人是不是控制欲强</div>
+        <div class="s-time">3 天前 23:08</div>
+      </div>
+      <div class="br-search-item">
+        <div class="s-q">焦虑型依恋 表现</div>
+        <div class="s-time">3 天前 22:51</div>
+      </div>
+    </div>
+  `;
+  if (!window.__wcPassed.has('br1')) {
+    setTimeout(() => triggerSensitive('br1'), 4000);
+  }
+}
+function renderBRBookmarks() {
+  brTitle.textContent = '书签';
+  brTabbar.querySelectorAll('.br-tab').forEach(t => {
+    t.classList.toggle('active', t.dataset.tab === 'bookmarks');
+  });
+  brContent.innerHTML = `
+    <div class="br-page" style="padding:0">
+      <div class="br-item">
+        <div class="b-title">深夜睡不着的时候做什么</div>
+        <div class="b-url">zhihu.com/question/xxx</div>
+        <div class="b-time">1 个月前收藏</div>
+      </div>
+      <div class="br-item">
+        <div class="b-title">如何照顾自己的情绪</div>
+        <div class="b-url">douban.com/note/xxx</div>
+        <div class="b-time">2 个月前收藏</div>
+      </div>
+      <div class="br-item">
+        <div class="b-title">一个匿名论坛</div>
+        <div class="b-url">forum-xxx.net</div>
+        <div class="b-time">4 个月前收藏</div>
+      </div>
+    </div>
+  `;
+}
+
+/* ============================================================
+   19. 敏感点提问系统（选项版）
+   ============================================================ */
+const wcOverlay = document.getElementById('wc-overlay');
+const wcAsked = document.getElementById('wc-asked');
+const wcOptions = document.getElementById('wc-options');
+
+const SENSITIVE = {
+  'wx1': {
+    question: ['你把他删了。','但这段对话还在。','是忘了删，还是不想删。'],
+    options: [
+      { text: '忘了删，回头清一下。', reply: ['嗯。','别忘了。'] },
+      { text: '……舍不得删。',       reply: ['……','我知道了。','谢谢你跟我说实话。'] },
+      { text: '关你什么事。',         reply: ['……对不起。','我不该问的。'] },
+    ],
+    owner: 'wechat',
+  },
+  'wx2': {
+    question: ['20 天前那张照片。','两个人。','你好像没跟我提过。','是谁呀。'],
+    options: [
+      { text: '是小雅，我闺蜜。',   reply: ['哦，小雅。','我记住这个名字了。'] },
+      { text: '一个普通朋友。',     reply: ['嗯。','普通朋友。','好。'] },
+      { text: '不想说。',           reply: ['……好。','我不问了。'] },
+    ],
+    owner: 'wechat',
+  },
+  'wx3': {
+    question: ['收藏最后一条。','你今天收藏的。','那四个字。','你留它做什么呀。'],
+    options: [
+      { text: '下不了手删。',       reply: ['……','你没发出来。','我知道你舍不得。'] },
+      { text: '提醒自己别冲动。',   reply: ['嗯。','那就先放着。'] },
+      { text: '随手收藏的。',       reply: ['嗯。','下次别随手了。'] },
+    ],
+    owner: 'wechat',
+  },
+  'qq1': {
+    question: ['QQ 里也留着他。','微信删了，QQ 也删了。','这段怎么还在呀。'],
+    options: [
+      { text: '忘了还有 QQ。',     reply: ['嗯，我信你。','那下次别忘了。'] },
+      { text: '懒得删。',           reply: ['好。','那就留着吧。'] },
+      { text: '不想删。',           reply: ['……','我知道了。'] },
+    ],
+    owner: 'qq',
+  },
+  'qq2': {
+    question: ['2019 年这封。','他没署名。','你知道是谁吗。'],
+    options: [
+      { text: '不知道。',           reply: ['……','有人在你不知道的地方喜欢你。','我不太高兴。'] },
+      { text: '猜过，没猜出来。',   reply: ['嗯。','那就不猜了。'] },
+      { text: '不想聊这个。',       reply: ['好。','那就不聊。'] },
+    ],
+    owner: 'qq',
+  },
+  'qq3': {
+    question: ['2018 年 3 月 4 号。','你生日那天。','你写"没有人记得"。','那天你在哪呀。'],
+    options: [
+      { text: '一个人在家。',       reply: ['……','以后你生日我陪你。','我记住了。'] },
+      { text: '在学校。',           reply: ['嗯。','以后不去了。'] },
+      { text: '不想提那天。',       reply: ['好。','我不问了。'] },
+    ],
+    owner: 'qq',
+  },
+  'qq4': {
+    question: ['2018 年这张。','你旁边那个男生。','只露了一半。','他是谁呀。'],
+    options: [
+      { text: '就是同学。',         reply: ['嗯。','那就是同学。','你笑的时候真好看。'] },
+      { text: '不记得了。',         reply: ['好。','那就不记得。'] },
+      { text: '不想说。',           reply: ['……好。','我不问了。'] },
+    ],
+    owner: 'qq',
+  },
+  'mail1': {
+    question: ['这封草稿。','22:31 写的。','收件人是我。','你想跟我说什么呀。'],
+    options: [
+      { text: '想说分手。',         reply: ['……','你没发。','但你写了。','我看到了。'] },
+      { text: '还没想好怎么说。',   reply: ['嗯。','那你慢慢想。','我等你。'] },
+      { text: '不想说。',           reply: ['……','好。'] },
+    ],
+    owner: 'mail',
+  },
+  'wb1': {
+    question: ['3 天前。','你转发了那条。','你写"我没有什么想见的人"。','……那我算什么呀。'],
+    options: [
+      { text: '骗人的，我想见你。',   reply: ['……','你骗人。','我知道的。'] },
+      { text: '那是气话。',           reply: ['嗯。','我信。','别气我就行。'] },
+      { text: '就是字面意思。',       reply: ['……','好。','我知道了。'] },
+    ],
+    owner: 'weibo',
+  },
+  'wb2': {
+    question: ['5 天前，凌晨 2:47。','你跟一个陌生的人说"我陪你"。','这句话，你跟我说过吗。'],
+    options: [
+      { text: '没跟你说过。对不起。', reply: ['……','没关系。','以后跟我说就好。'] },
+      { text: '说过呀。',             reply: ['……','你确定吗。','我不太记得。'] },
+      { text: '那只是随口安慰。',     reply: ['嗯。','那下次安慰我。'] },
+    ],
+    owner: 'weibo',
+  },
+  'wb3': {
+    question: ['2019 年 9 月 12 号。','你关注了他。','他头像挺模糊的。','你看过几遍呀。'],
+    options: [
+      { text: '看过很多次。',         reply: ['……','那以后我的，你也多看几遍。'] },
+      { text: '一两次吧。',           reply: ['嗯。','那就好。'] },
+      { text: '不记得了。',           reply: ['好。','不记得就算了。'] },
+    ],
+    owner: 'weibo',
+  },
+  'br1': {
+    question: ['你今天搜的。','最后一条。','怎么分手不伤人。','你搜这个的时候，是不是在说我。'],
+    options: [
+      { text: '是，我在想我们的事。', reply: ['……','你搜了。','你没跟我说。','以后别一个人扛。'] },
+      { text: '随便搜的。',           reply: ['嗯。','那就好。'] },
+      { text: '不想聊。',             reply: ['……','好。','那就不聊。'] },
+    ],
+    owner: 'browser',
+  },
+};
+
+let currentSensitive = null;
+let wcBusy = false;
+
+async function triggerSensitive(key) {
+  if (window.__wcPassed && window.__wcPassed.has(key)) return;
+  if (wcOverlay.classList.contains('active')) return;
+
+  currentSensitive = key;
+  wcAsked.innerHTML = '';
+  wcOptions.innerHTML = '';
+  wcOptions.style.display = 'none';
+
+  const data = SENSITIVE[key];
+  const appEl = data.owner === 'wechat' ? wechatApp :
+                data.owner === 'qq' ? qqApp :
+                data.owner === 'mail' ? mailApp :
+                data.owner === 'weibo' ? weiboApp : browserApp;
+  appEl.classList.add('shaking');
+  Audio_.alertHit();
+  setTimeout(() => appEl.classList.remove('shaking'), 520);
+
+  await sleep(600);
+
+  wcOverlay.classList.add('active');
+  setTimeout(() => Audio_.askPop(), 200);
+
+  wcBusy = true;
+  typeWCLines(data.question.map(t => ({ text: t })), () => {
+    wcBusy = false;
+    showOptions(data.options);
+  });
+}
+
+function typeWCLines(lines, done) {
+  wcAsked.innerHTML = '';
+  let li = 0;
+  function next() {
+    if (li >= lines.length) { done && done(); return; }
+    const item = lines[li];
+    const el = document.createElement('span');
+    el.className = 'line' + (item.cls ? ' ' + item.cls : '');
+    wcAsked.appendChild(el);
+    const cur = document.createElement('span');
+    cur.className = 'cursor';
+    el.appendChild(cur);
+    const text = item.text;
+    let ci = 0;
+    const t = setInterval(() => {
+      if (ci >= text.length) {
+        clearInterval(t);
+        cur.remove(); li++;
+        setTimeout(next, 460);
+        return;
+      }
+      cur.insertAdjacentText('beforebegin', text[ci]);
+      if (Math.random() < .4) Audio_.key();
+      ci++;
+    }, 62);
+  }
+  next();
+}
+
+function showOptions(options) {
+  wcOptions.innerHTML = '';
+  wcOptions.style.display = 'flex';
+  options.forEach((opt, i) => {
+    const el = document.createElement('div');
+    el.className = 'opt';
+    el.style.animationDelay = (i * 80) + 'ms';
+    el.innerHTML = `<span class="opt-mark">▸</span>${opt.text}`;
+    el.addEventListener('click', () => {
+      if (wcBusy) return;
+      wcBusy = true;
+      Audio_.click();
+      wcOptions.style.display = 'none';
+      wcOptions.innerHTML = '';
+      const chosen = document.createElement('span');
+      chosen.className = 'line';
+      chosen.style.color = '#ff8b8b';
+      chosen.style.marginTop = '10px';
+      chosen.textContent = '你：' + opt.text;
+      wcAsked.appendChild(chosen);
+      setTimeout(() => {
+        typeWCLines(opt.reply.map(t => ({ text: t, cls: 'dim' })), () => {
+          setTimeout(() => {
+            wcOverlay.classList.remove('active');
+            wcBusy = false;
+            afterSensitivePass();
+          }, 1100);
+        });
+      }, 300);
+    });
+    wcOptions.appendChild(el);
+  });
+}
+
+function afterSensitivePass() {
+  if (!window.__wcPassed) window.__wcPassed = new Set();
+  window.__wcPassed.add(currentSensitive);
+
+  const wxAll = window.__wcPassed.has('wx1') && window.__wcPassed.has('wx2') && window.__wcPassed.has('wx3');
+  if (wxAll && appStatus.wechat !== 'done') {
+    appStatus.wechat = 'done';
+    appStatus.qq = 'unlocked';
+    renderDesktop();
+    setTimeout(() => showSysToast('微信通过。去点 QQ。'), 600);
+    return;
+  }
+  if (!wxAll && appStatus.wechat === 'unlocked') {
+    const missing = [];
+    if (!window.__wcPassed.has('wx1')) missing.push('陈凯的对话');
+    if (!window.__wcPassed.has('wx2')) missing.push('朋友圈');
+    if (!window.__wcPassed.has('wx3')) missing.push('收藏');
+    if (missing.length > 0) {
+      setTimeout(() => showSysToast('微信还有：' + missing.join('、') + '。'), 500);
+    }
+  }
+
+  const qqAll = window.__wcPassed.has('qq1') && window.__wcPassed.has('qq2') && window.__wcPassed.has('qq3') && window.__wcPassed.has('qq4');
+  if (qqAll && appStatus.qq !== 'done') {
+    appStatus.qq = 'done';
+    appStatus.mail = 'unlocked';
+    renderDesktop();
+    setTimeout(() => showSysToast('QQ 通过。去点邮箱。'), 600);
+    return;
+  }
+  if (appStatus.qq === 'unlocked' && !qqAll) {
+    const missing = [];
+    if (!window.__wcPassed.has('qq1')) missing.push('陈凯的对话');
+    if (!window.__wcPassed.has('qq2')) missing.push('匿名邮件');
+    if (!window.__wcPassed.has('qq3')) missing.push('空间说说');
+    if (!window.__wcPassed.has('qq4')) missing.push('相册');
+    if (missing.length > 0) {
+      setTimeout(() => showSysToast('QQ 还有：' + missing.join('、') + '。'), 500);
+    }
+  }
+
+  if (window.__wcPassed.has('mail1') && appStatus.mail !== 'done') {
+    appStatus.mail = 'done';
+    appStatus.weibo = 'unlocked';
+    renderDesktop();
+    setTimeout(() => showSysToast('邮箱通过。去点微博。'), 600);
+    return;
+  }
+
+  const wbAll = window.__wcPassed.has('wb1') && window.__wcPassed.has('wb2') && window.__wcPassed.has('wb3');
+  if (wbAll && appStatus.weibo !== 'done') {
+    appStatus.weibo = 'done';
+    appStatus.browser = 'unlocked';
+    renderDesktop();
+    setTimeout(() => showSysToast('微博通过。去点浏览器。'), 600);
+    return;
+  }
+  if (appStatus.weibo === 'unlocked' && !wbAll) {
+    const missing = [];
+    if (!window.__wcPassed.has('wb1')) missing.push('主页那条转发');
+    if (!window.__wcPassed.has('wb2')) missing.push('评论');
+    if (!window.__wcPassed.has('wb3')) missing.push('关注列表');
+    if (missing.length > 0) {
+      setTimeout(() => showSysToast('微博还有：' + missing.join('、') + '。'), 500);
+    }
+  }
+
+  if (window.__wcPassed.has('br1') && appStatus.browser !== 'done') {
+    appStatus.browser = 'done';
+    renderDesktop();
+    closeAllApps();
+    setTimeout(() => showSysToast('全部通过。C 在收网。'), 600);
+    setTimeout(() => startCentsEnding(), 2600);
+  }
+}
+
+function closeAllApps() {
+  wechatApp.classList.remove('active');
+  qqApp.classList.remove('active');
+  mailApp.classList.remove('active');
+  weiboApp.classList.remove('active');
+  browserApp.classList.remove('active');
+  wcOverlay.classList.remove('active');
+}
+
+/* ============================================================
+   20. 结局：Cents 接管 → 四句话 → 好/不好
+   ============================================================ */
+const centsEnd   = document.getElementById('cents-end');
+const ceLines    = document.getElementById('ce-lines');
+const ceTaunt    = document.getElementById('ce-taunt');
+const ceGood     = document.getElementById('ce-good');
+const ceBad      = document.getElementById('ce-bad');
+const ceBtnWrap  = document.getElementById('ce-btn-wrap');
+
+let ceBadDodges = 0;
+let ceEndingDone = false;
+
+const CE_TAUNTS = [
+  '真的嘛？',
+  '你真的舍得嘛？',
+  '你看着我的眼睛说。',
+  '我不信。',
+  '再给你一次机会。',
+  '你骗我。',
+  '你明明犹豫了。',
+  '我知道你舍不得。',
+  '你删了我 47 次消息，我都没走。',
+  '你就点一下"好"，好不好。',
+];
+
+function startCentsEnding() {
+  if (ceEndingDone) return;
+  ceEndingDone = true;
+
+  const stl = document.getElementById('sys-toast-layer');
+  stl.classList.remove('show');
+
+  centsEnd.classList.add('active');
+  Audio_.takeover();
+
+  blackout.classList.add('on');
+  setTimeout(() => blackout.classList.remove('on'), 700);
+
+  const name = STATE.playerName || '你';
+  const lines = [
+    { text: name, cls: 'name' },
+    { text: '你真的不要我了嘛？' },
+    { text: '你真的要和我分手吗。。' },
+    { text: '求求你不要丢掉我好不好。' },
+  ];
+
+  ceLines.innerHTML = '';
+  let li = 0;
+  function nextLine() {
+    if (li >= lines.length) {
+      setTimeout(() => {
+        ceBtnWrap.classList.add('show');
+        resetBadBtn();
+      }, 500);
+      return;
+    }
+    const item = lines[li];
+    const el = document.createElement('div');
+    if (item.cls) el.className = item.cls;
+    ceLines.appendChild(el);
+    const cur = document.createElement('span');
+    cur.className = 'cursor';
+    el.appendChild(cur);
+    const text = item.text;
+    let ci = 0;
+    const timer = setInterval(() => {
+      if (ci >= text.length) {
+        clearInterval(timer);
+        cur.remove(); li++;
+        setTimeout(nextLine, 420);
+        return;
+      }
+      cur.insertAdjacentText('beforebegin', text[ci]);
+      if (Math.random() < .5) Audio_.key();
+      ci++;
+    }, item.cls === 'name' ? 150 : 130);
+  }
+  setTimeout(nextLine, 900);
+}
+
+function resetBadBtn() {
+  ceBad.classList.remove('escape');
+  ceBad.style.left = '';
+  ceBad.style.top = '';
+  ceBad.style.transform = '';
+  ceBad.style.width = '';
+  ceBad.style.height = '';
+  ceBad.style.fontSize = '';
+  ceBad.style.opacity = '1';
+  ceBad.style.pointerEvents = 'auto';
+  ceTaunt.textContent = '';
+  ceBadDodges = 0;
+}
+
+function dodgeBadBtn() {
+  ceBadDodges++;
+  const vw = window.innerWidth;
+  const vh = window.innerHeight;
+  const bw = ceBad.offsetWidth  || 112;
+  const bh = ceBad.offsetHeight || 52;
+  const pad = 18;
+  const goodRect = ceGood.getBoundingClientRect();
+  const minX = pad;
+  const maxX = vw - bw - pad;
+  const minY = 70;
+  const maxY = vh - bh - 40;
+  let nx = minX, ny = minY, tries = 0;
+  while (tries < 40) {
+    nx = minX + Math.random() * Math.max(1, maxX - minX);
+    ny = minY + Math.random() * Math.max(1, maxY - minY);
+    const dx = Math.abs((nx + bw/2) - (goodRect.left + goodRect.width/2));
+    const dy = Math.abs((ny + bh/2) - (goodRect.top  + goodRect.height/2));
+    if (dx > bw + 60 || dy > bh + 60) break;
+    tries++;
+  }
+  if (!ceBad.classList.contains('escape')) {
+    const r = ceBad.getBoundingClientRect();
+    ceBad.classList.add('escape');
+    ceBad.style.left = r.left + 'px';
+    ceBad.style.top  = r.top  + 'px';
+    ceBad.style.width = r.width + 'px';
+    ceBad.style.height = r.height + 'px';
+    void ceBad.offsetWidth;
+  }
+  ceBad.style.left = nx + 'px';
+  ceBad.style.top  = ny + 'px';
+  const scale = Math.max(.62, 1 - ceBadDodges * 0.05);
+  ceBad.style.transform = `rotate(${(Math.random()*20 - 10)}deg) scale(${scale})`;
+  const op = Math.max(.62, 1 - ceBadDodges * 0.04);
+  ceBad.style.opacity = op;
+  ceTaunt.textContent = CE_TAUNTS[(ceBadDodges - 1) % CE_TAUNTS.length];
+  Audio_.wrong();
+  if (navigator.vibrate) { try { navigator.vibrate(40); } catch(e) {} }
+}
+
+ceBad.addEventListener('click', e => {
+  e.preventDefault();
+  e.stopPropagation();
+  dodgeBadBtn();
+});
+
+ceGood.addEventListener('click', () => {
+  if (ceGood.dataset.done === '1') return;
+  ceGood.dataset.done = '1';
+  Audio_.celebrate();
+  if (navigator.vibrate) { try { navigator.vibrate([40,30,40,30,120]); } catch(e) {} }
+  centsEnd.style.transition = 'opacity .5s';
+  centsEnd.style.opacity = '0';
+  setTimeout(() => {
+    centsEnd.classList.remove('active');
+    centsEnd.style.opacity = '';
+    centsEnd.style.transition = '';
+    startCelebrate();
+  }, 500);
+});
+
+/* ============================================================
+   21. 庆祝动画：红色心跳脉冲 + 粒子爆发
+   ============================================================ */
+const ceCelebrate = document.getElementById('ce-celebrate');
+const ceCanvas = document.getElementById('ce-canvas');
+const ceCelText = document.getElementById('ce-cel-text');
+let ceRAF = null;
+
+function drawHeart(ctx, x, y, size, rot) {
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.rotate(rot);
+  ctx.beginPath();
+  const s = size;
+  ctx.moveTo(0, s * 0.42);
+  ctx.bezierCurveTo( s * 1.05, -s * 0.38,  s * 0.42, -s * 1.35, 0, -s * 0.55);
+  ctx.bezierCurveTo(-s * 0.42, -s * 1.35, -s * 1.05,  -s * 0.38, 0, s * 0.42);
+  ctx.closePath();
+  ctx.fill();
+  ctx.restore();
+}
+
+function startCelebrate() {
+  ceCelebrate.classList.add('active');
+  ceCelText.classList.remove('show');
+  resizeCECanvas();
+  window.addEventListener('resize', resizeCECanvas);
+
+  const ctx = ceCanvas.getContext('2d');
+  const W = () => window.innerWidth;
+  const H = () => window.innerHeight;
+  let cx = W() / 2;
+  let cy = H() / 2;
+  const MAX_R = Math.min(W(), H()) * 0.32;
+
+  const COLORS = ['#ff2b2b','#ff1744','#ff0055','#ff5c5c','#ff8b8b','#ffd0d0','#c41e2c'];
+
+  const rings = [];
+  const particles = [];
+  const floatHearts = [];
+  const sparks = [];
+
+  function spawnParticle(angle, speed, size, color, life, shape) {
+    return {
+      x: cx, y: cy,
+      vx: Math.cos(angle) * speed,
+      vy: Math.sin(angle) * speed,
+      size, color, life, maxLife: life,
+      spin: Math.random() * Math.PI * 2,
+      spinSpeed: (Math.random() - .5) * .25,
+      shape,
+    };
+  }
+
+  function bigBurst(count, baseSpeed) {
+    for (let i = 0; i < count; i++) {
+      const a = Math.random() * Math.PI * 2;
+      const s = baseSpeed * (0.4 + Math.random() * 0.9);
+      particles.push(spawnParticle(
+        a, s,
+        3 + Math.random() * 4,
+        COLORS[Math.floor(Math.random() * COLORS.length)],
+        70 + Math.random() * 60,
+        Math.random() < 0.32 ? 'heart' : 'dot'
+      ));
+    }
+  }
+
+  function heartbeatPulse() {
+    rings.push({ r: 8, max: MAX_R * 1.25, life: 60, maxLife: 60, w: 6, bright: 1 });
+    rings.push({ r: 4, max: MAX_R * 1.05, life: 55, maxLife: 55, w: 2, bright: .7 });
+    for (let i = 0; i < 14; i++) {
+      const a = Math.random() * Math.PI * 2;
+      const s = 1.6 + Math.random() * 2.4;
+      sparks.push({
+        x: cx, y: cy,
+        vx: Math.cos(a) * s, vy: Math.sin(a) * s,
+        life: 26, maxLife: 26,
+        size: 1.5 + Math.random() * 2,
+        color: COLORS[Math.floor(Math.random()*COLORS.length)],
+      });
+    }
+  }
+
+  heartbeatPulse();
+  bigBurst(140, 3.4);
+  Audio_.heartbeat(0.14);
+
+  let frame = 0;
+  const heartChars = ['♥','❤','♡','💗'];
+
+  function loop() {
+    frame++;
+    ctx.fillStyle = 'rgba(5,5,6,0.22)';
+    ctx.fillRect(0, 0, W(), H());
+
+    const beat = Math.sin(frame * 0.16);
+    const beatStrong = Math.max(0, beat) ** 2;
+    const haloR = MAX_R * (0.9 + beatStrong * 0.25);
+
+    const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, haloR);
+    g.addColorStop(0,    'rgba(255,60,60,' + (0.28 + beatStrong * 0.22) + ')');
+    g.addColorStop(0.35, 'rgba(200,0,30,' + (0.14 + beatStrong * 0.12) + ')');
+    g.addColorStop(0.7,  'rgba(120,0,20,0.05)');
+    g.addColorStop(1,    'rgba(0,0,0,0)');
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, W(), H());
+
+    const coreR = 14 + beatStrong * 18;
+    const coreG = ctx.createRadialGradient(cx, cy, 0, cx, cy, coreR);
+    coreG.addColorStop(0,   'rgba(255,255,255,' + (0.55 + beatStrong * 0.35) + ')');
+    coreG.addColorStop(0.4, 'rgba(255,80,80,' + (0.5 + beatStrong * 0.3) + ')');
+    coreG.addColorStop(1,   'rgba(255,43,43,0)');
+    ctx.fillStyle = coreG;
+    ctx.beginPath();
+    ctx.arc(cx, cy, coreR, 0, Math.PI * 2);
+    ctx.fill();
+
+    for (let i = rings.length - 1; i >= 0; i--) {
+      const rg = rings[i];
+      rg.r += (rg.max - rg.r) * 0.06 + 1.4;
+      rg.life--;
+      const alpha = Math.max(0, rg.life / rg.maxLife);
+      const a = alpha * rg.bright;
+      ctx.save();
+      ctx.shadowColor = 'rgba(255,43,43,' + (a * 0.95) + ')';
+      ctx.shadowBlur = 24 * a + 6;
+      ctx.beginPath();
+      ctx.arc(cx, cy, rg.r, 0, Math.PI * 2);
+      ctx.strokeStyle = 'rgba(255,60,60,' + (a * 0.9) + ')';
+      ctx.lineWidth = rg.w * (0.4 + alpha * 0.9);
+      ctx.stroke();
+      ctx.restore();
+      if (rg.life <= 0 || rg.r > rg.max) rings.splice(i, 1);
+    }
+
+    for (let i = sparks.length - 1; i >= 0; i--) {
+      const s = sparks[i];
+      s.x += s.vx; s.y += s.vy;
+      s.vx *= 0.92; s.vy *= 0.92;
+      s.life--;
+      const a = Math.max(0, s.life / s.maxLife);
+      ctx.save();
+      ctx.globalAlpha = a;
+      ctx.fillStyle = s.color;
+      ctx.shadowColor = s.color;
+      ctx.shadowBlur = 12;
+      ctx.beginPath();
+      ctx.arc(s.x, s.y, s.size, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+      if (s.life <= 0) sparks.splice(i, 1);
+    }
+
+    for (let i = particles.length - 1; i >= 0; i--) {
+      const p = particles[i];
+      p.x += p.vx; p.y += p.vy;
+      p.vx *= 0.965; p.vy *= 0.965;
+      p.vy += 0.035;
+      p.spin += p.spinSpeed;
+      p.life--;
+      const alpha = Math.max(0, p.life / p.maxLife);
+      const dist = Math.hypot(p.x - cx, p.y - cy);
+      const edge = Math.min(1, Math.max(0, 1 - (dist - MAX_R) / (MAX_R * 0.45)));
+      const a = alpha * edge;
+
+      if (a > 0.02) {
+        ctx.save();
+        ctx.globalAlpha = a;
+        ctx.fillStyle = p.color;
+        ctx.shadowColor = p.color;
+        ctx.shadowBlur = 16;
+        if (p.shape === 'heart') {
+          drawHeart(ctx, p.x, p.y, p.size * 1.6, p.spin);
+        } else {
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        ctx.restore();
+      }
+      if (p.life <= 0 || dist > MAX_R * 1.6) particles.splice(i, 1);
+    }
+
+    if (frame % 50 === 1 && frame < 280) {
+      heartbeatPulse();
+      bigBurst(38, 3.2);
+      Audio_.heartbeat(0.1);
+    }
+
+    if (frame % 40 === 0 && frame < 260) {
+      for (let k = 0; k < 7; k++) {
+        const a0 = Math.random() * Math.PI * 2;
+        const r0 = Math.random() * MAX_R * 0.4;
+        floatHearts.push({
+          x: cx + Math.cos(a0) * r0,
+          y: cy + Math.sin(a0) * r0 + MAX_R * 0.1,
+          vx: Math.cos(a0) * 0.4,
+          vy: -0.6 - Math.random() * 0.8,
+          size: 14 + Math.random() * 12,
+          life: 115,
+          maxLife: 115,
+          rot: (Math.random() - 0.5) * 0.7,
+          ch: heartChars[Math.floor(Math.random() * heartChars.length)],
+          wobble: Math.random() * Math.PI * 2,
+        });
+      }
+    }
+
+    for (let i = floatHearts.length - 1; i >= 0; i--) {
+      const h = floatHearts[i];
+      h.wobble += 0.08;
+      h.x += h.vx + Math.sin(h.wobble) * 0.35;
+      h.y += h.vy;
+      h.life--;
+      const alpha = Math.max(0, h.life / h.maxLife);
+      const dist = Math.hypot(h.x - cx, h.y - cy);
+      const edge = Math.min(1, Math.max(0, 1 - (dist - MAX_R) / (MAX_R * 0.4)));
+      const a = alpha * edge;
+
+      if (a > 0.02) {
+        ctx.save();
+        ctx.globalAlpha = a * 0.95;
+        ctx.translate(h.x, h.y);
+        ctx.rotate(Math.sin(h.wobble) * 0.15 + h.rot * 0.3);
+        ctx.fillStyle = '#ff2b2b';
+        ctx.shadowColor = '#ff1744';
+        ctx.shadowBlur = 18;
+        ctx.font = h.size + 'px serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(h.ch, 0, 0);
+        ctx.globalAlpha = a * 0.5;
+        ctx.fillStyle = '#ffd0d0';
+        ctx.shadowBlur = 0;
+        ctx.font = (h.size * 0.9) + 'px serif';
+        ctx.fillText(h.ch, -h.size * 0.12, -h.size * 0.12);
+        ctx.restore();
+      }
+      if (h.life <= 0 || dist > MAX_R * 1.5) floatHearts.splice(i, 1);
+    }
+
+    ceRAF = requestAnimationFrame(loop);
+  }
+  loop();
+
+  setTimeout(() => ceCelText.classList.add('show'), 450);
+
+  setTimeout(() => {
+    if (ceRAF) cancelAnimationFrame(ceRAF);
+    ceRAF = null;
+    window.removeEventListener('resize', resizeCECanvas);
+    ceCelebrate.style.transition = 'opacity .9s';
+    ceCelebrate.style.opacity = '0';
+    setTimeout(() => {
+      ceCelebrate.classList.remove('active');
+      ceCelebrate.style.opacity = '';
+      ceCelebrate.style.transition = '';
+      ceCelText.classList.remove('show');
+      restoreDesktopAfterEnding();
+    }, 900);
+  }, 5200);
+}
+
+function resizeCECanvas() {
+  if (!ceCanvas) return;
+  const dpr = window.devicePixelRatio || 1;
+  ceCanvas.width = window.innerWidth * dpr;
+  ceCanvas.height = window.innerHeight * dpr;
+  ceCanvas.style.width = window.innerWidth + 'px';
+  ceCanvas.style.height = window.innerHeight + 'px';
+  const ctx = ceCanvas.getContext('2d');
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+}
+
+/* ============================================================
+   22. 桌面恢复原样（保持全部解锁）
+   ============================================================ */
+function restoreDesktopAfterEnding() {
+  appStatus.wechat = 'done';
+  appStatus.qq = 'done';
+  appStatus.mail = 'done';
+  appStatus.weibo = 'done';
+  appStatus.browser = 'done';
+  renderDesktop();
+  desktopEl.classList.add('active');
+  taskbarEl.classList.add('active');
+  setTimeout(() => {
+    showSysToast('Cents 已住进你的手机。他会一直在。');
+  }, 600);
+}
+
+/* ============================================================
+   23. 全局一键跳过：直接进入 Cents 标记结局
+   ============================================================ */
+const globalSkip = document.getElementById('global-skip');
+let globalSkipDone = false;
+
+globalSkip.addEventListener('click', e => {
+  e.preventDefault();
+  e.stopPropagation();
+  if (globalSkipDone) return;
+  globalSkipDone = true;
+  Audio_.click();
+  wcOverlay.classList.remove('active');
+  wechatApp.classList.remove('active');
+  qqApp.classList.remove('active');
+  mailApp.classList.remove('active');
+  weiboApp.classList.remove('active');
+  browserApp.classList.remove('active');
+  phoneEl.classList.remove('active');
+  warnLayer.classList.remove('active');
+  warnLayer.classList.remove('black');
+  warnLayer.innerHTML = '';
+  document.getElementById('sys-toast-layer').classList.remove('show');
+  drawer.classList.remove('open');
+  drawerBackdrop.classList.remove('open');
+  monologueEl.classList.remove('active');
+  nameScreen.classList.remove('fade');
+  stopAuto();
+  globalSkip.classList.remove('show');
+  ceEndingDone = false;
+  startCentsEnding();
+});
+
+function syncGlobalSkip() {
+  const shouldShow =
+    desktopEl.classList.contains('active') &&
+    !centsEnd.classList.contains('active') &&
+    !ceCelebrate.classList.contains('active') &&
+    !globalSkipDone;
+  globalSkip.classList.toggle('show', shouldShow);
+}
+setInterval(syncGlobalSkip, 400);
+
+/* ============================================================
+   24. 时钟
+   ============================================================ */
+setInterval(() => {
+  const d = new Date();
+  const hh = String(d.getHours()).padStart(2,'0');
+  const mm = String(d.getMinutes()).padStart(2,'0');
+  const c = document.getElementById('clock');
+  if (c) c.textContent = `${hh}:${mm}`;
+  const ph = document.getElementById('ph-time');
+  if (ph) ph.textContent = `${hh}:${mm}`;
+}, 10000);
+(function(){
+  const d = new Date();
+  document.getElementById('ph-time').textContent =
+    String(d.getHours()).padStart(2,'0') + ':' +
+    String(d.getMinutes()).padStart(2,'0');
+})();
+
+/* ============================================================
+   25. 启动
+   ============================================================ */
+startNameScreen();
+</script>
+</body>
+</html>
